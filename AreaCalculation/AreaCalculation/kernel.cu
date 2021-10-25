@@ -6,24 +6,51 @@
 
 cudaError_t areaWithCuda(float *c, const float *a, const float *b, unsigned int size);
 
-__global__ void areaKernel(int *area, const float *vertices, const int *facests)
+__global__ void areaKernel(double *area, const float *vertices, const int *facests)
 {
     // given a set of vertices and facet [v0,v1,v2](list of indeices of vertices belonging to a face) fill in what the area of that face is
+    
+    // formula is (x1*y2+x2*y3+x3*y1-y1*x2-y2*x3-y3*x1)/2 
+    // NOTE THIS CAN BE DONE MORE IN PARALLEL
+    
     int i = threadIdx.x;
-    c[i] = a[i] + b[i];
+    // do i*3 because we have 3 vertcies per facet
+    // do facets[]*2 becasue we have x and y positions
+    area[i] = (vertices[facets[i*3]*2]*vertices[facets[i*3+1]*2+1] /
+        + vertices[facets[i*3+1]*2]*vertices[facets[i*3+2]*2+1] /
+        + vertices[facets[i*3+2]*2]*vertices[facets[i*3]*2+1] /
+        + vertices[facets[i*3]*2]*vertices[facets[i*3+2]*2+1] /
+        + vertices[facets[i*3+1]*2]*vertices[facets[i*3]*2+1] /
+        + vertices[facets[i*3+2]*2]*vertices[facets[i*3+1]*2+1])/2;
 }
 
-__global__ void addTree(int* area, const float* vertices, const int* facests)
+__global__ void addTree(float *g_idata, float *g_odata)
 {
-    // given a set of vertices and facet [v0,v1,v2](list of indeices of vertices belonging to a face) fill in what the area of that face is
-    int i = threadIdx.x;
-    c[i] = a[i] + b[i];
+    //https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf
+
+    extern __shared__ int sdata[];
+    // each thread loads one element from global to shared mem
+    unsigned int tid = threadIdx.x; // get the id of this thread
+    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
+    sdata[tid] = g_idata[i]; // move the data over
+    __syncthreads();
+    // do reduction in shared mem
+    for (unsigned int s=1; s < blockDim.x; s *= 2) {
+        int index = 2 * s * tid;
+        if (index < blockDim.x) {
+            sdata[index] += sdata[index + s];
+        }
+        __syncthreads();
+    }
+    // write result for this block to global mem
+    if (tid == 0) g_odata[blockIdx.x] = sdata[0];
+    
 }
 
 int main()
 {
-    const int arraySize = 5;
-    const int a[arraySize] = { 1, 2, 3, 4, 5 };
+    const int meshSize = 5;
+    const float a[arraySize*2] = { 1, 2, 3, 4, 5 };
     const int b[arraySize] = { 10, 20, 30, 40, 50 };
     int c[arraySize] = { 0 };
 
