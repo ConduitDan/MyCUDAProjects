@@ -22,12 +22,9 @@ __global__ void areaKernel(float *area, const float *vertices, const unsigned in
     // do i*3 because we have 3 vertcies per facet
     // do facets[]*2 becasue we have x and y positions
     if (i < size) {
-        area[i] = (vertices[facets[i * 3] * 2] * vertices[facets[i * 3 + 1] * 2 + 1] /
-            +vertices[facets[i * 3 + 1] * 2] * vertices[facets[i * 3 + 2] * 2 + 1] /
-            +vertices[facets[i * 3 + 2] * 2] * vertices[facets[i * 3] * 2 + 1] /
-            +vertices[facets[i * 3] * 2] * vertices[facets[i * 3 + 2] * 2 + 1] /
-            +vertices[facets[i * 3 + 1] * 2] * vertices[facets[i * 3] * 2 + 1] /
-            +vertices[facets[i * 3 + 2] * 2] * vertices[facets[i * 3 + 1] * 2 + 1]) / 2;
+        area[i] = abs(vertices[facets[i * 3] * 2] * (vertices[facets[i * 3 + 1] * 2 + 1] - vertices[facets[i * 3 + 2] * 2 + 1]) \
+            + vertices[facets[i * 3 + 1] * 2] * (vertices[facets[i * 3 + 2] * 2 + 1] - vertices[facets[i * 3] * 2 + 1]) \
+            + vertices[facets[i * 3 + 2] * 2] * (vertices[facets[i * 3] * 2 + 1] - vertices[facets[i * 3 + 1] * 2 + 1])) / 2;
     }
 }
 
@@ -40,19 +37,20 @@ __global__ void addTree(float* g_idata, float* g_odata, const unsigned int size)
     // each thread loads one element from global to shared mem
     unsigned int tid = threadIdx.x; // get the id of this thread
     unsigned int i = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
-    sdata[tid] = g_idata[i] + g_idata[i + blockDim.x];// g_idata[i]; // move the data over
-
-   __syncthreads();
-        // do reduction in shared mem
-    for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
-        if (tid < s) {
-            sdata[tid] += sdata[tid + s];
-        }
-       __syncthreads();
+    if (i + blockDim.x < size) {
+        sdata[tid] = g_idata[i] + g_idata[i + blockDim.x];// g_idata[i]; // move the data over
     }
-    __syncthreads();
+   __syncthreads();
+    //    // do reduction in shared mem
+    //for (unsigned int s = blockDim.x / 4; s > 0; s >>= 1) {
+    //    if (tid < s) {
+    //        sdata[tid] += sdata[tid + s];
+    //    }
+    //   __syncthreads();
+    //}
+    //__syncthreads();
     
-    // write result for this block to global mem
+//     write result for this block to global mem
     if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 
 }
@@ -61,7 +59,15 @@ int main()
 {
     const int meshSize = 8;
     const int facetSize = 6;
-    const float vertices[meshSize * 2] = { 0,0,1,0,2,0,1,0.5,1,1.5,2,0,2,1,2,2 };
+    const float vertices[meshSize * 2] = {\
+        0,0,\
+        1,0,\
+        2,0,\
+        0.5,1,\
+        1.5,1,\
+        0,2,\
+        1,2,\
+        2,2 };
     //x---x---x
     // \  /\  /
     //  \/  \/
@@ -77,7 +83,7 @@ int main()
                                         6, 4, 7 };
     float *areaPerFace = (float *) malloc(facetSize * sizeof(float));
     float area = 0;
-
+    float areaCPU = 0;
     // Add vectors in parallel.
     cudaError_t cudaStatus = areaWithCuda(vertices, meshSize, facets, facetSize, areaPerFace, &area);
     if (cudaStatus != cudaSuccess) {
@@ -85,9 +91,19 @@ int main()
         return 1;
     }
 
+    printf("Facets:\n");
+    for (int i = 0; i < facetSize; i++) {
+        printf("%d: (%f, %f), (%f, %f) , (%f, %f)\n", i, vertices[facets[i * 3] * 2], vertices[facets[i * 3] * 2 + 1],\
+            vertices[facets[i * 3 + 1] * 2], vertices[facets[i * 3 + 1] * 2 + 1],\
+            vertices[facets[i * 3 + 2] * 2], vertices[facets[i * 3 + 2] * 2 + 1]);
+    }
+
     printf("area on facets: \n");
     for (int i = 0; i < facetSize; i++) {
-        printf("%d: %f\n", i, areaPerFace[i]);
+        //areaCPU = (vertices[facets[i * 3] * 2] * (vertices[facets[i * 3 + 1] * 2 + 1] - vertices[facets[i * 3 + 2] * 2 + 1]) \
+            + vertices[facets[i * 3 + 1] * 2] * (vertices[facets[i * 3 + 2] * 2 + 1] - vertices[facets[i * 3] * 2 + 1]) \
+            + vertices[facets[i * 3 + 2] * 2] * (vertices[facets[i * 3] * 2 + 1] - vertices[facets[i * 3 + 1] * 2 + 1])) / 2;
+        printf("%d: GPU %f \n", i, areaPerFace[i]);
     }
     printf("Total Area: %f\n", area);
 
