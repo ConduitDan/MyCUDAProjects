@@ -4,7 +4,7 @@
 #include <device_functions.h>
 #include <stdio.h>
 
-#define BLOCKSIZE 32
+#define BLOCKSIZE 4
 
 cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, const unsigned int* facets, \
     const unsigned int facetSize, float* areaPerFace, float* area);
@@ -26,10 +26,13 @@ __global__ void areaKernel(float *area, const float *vertices, const unsigned in
             + vertices[facets[i * 3 + 1] * 2] * (vertices[facets[i * 3 + 2] * 2 + 1] - vertices[facets[i * 3] * 2 + 1]) \
             + vertices[facets[i * 3 + 2] * 2] * (vertices[facets[i * 3] * 2 + 1] - vertices[facets[i * 3 + 1] * 2 + 1])) / 2;
     }
+    else {
+        area[i] = 0;
+    }
 }
 
 
-__global__ void addTree(float* g_idata, float* g_odata, const unsigned int size)
+__global__ void addTree(const float* g_idata, float* g_odata)
 {
     //https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf
 
@@ -37,23 +40,25 @@ __global__ void addTree(float* g_idata, float* g_odata, const unsigned int size)
     // each thread loads one element from global to shared mem
     unsigned int tid = threadIdx.x; // get the id of this thread
     unsigned int i = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
-    if (i + blockDim.x < size) {
-        sdata[tid] = g_idata[i] + g_idata[i + blockDim.x];// g_idata[i]; // move the data over
-    }
+    //if (i + blockDim.x < size) {
+    //printf("tid: %d\ti:%d\ti + blockDim.x:%d\tg_idata[i]:%f\tg_idata[i + blockDim.x]%f\n",tid,i, i + blockDim.x, g_idata[i] , g_idata[i + blockDim.x]);
+    sdata[tid] = g_idata[i] + g_idata[i + blockDim.x];// g_idata[i]; // move the data over
+    //printf("tid: %d\ti:%d\ti + blockDim.x:%d\tg_idata[i]:%f\tg_idata[i + blockDim.x]%f\t sdata[tid]: %f\n", tid, i, i + blockDim.x, g_idata[i], g_idata[i + blockDim.x], sdata[tid]);
+                                                      //}
    __syncthreads();
-    //    // do reduction in shared mem
-    //for (unsigned int s = blockDim.x / 4; s > 0; s >>= 1) {
-    //    if (tid < s) {
-    //        sdata[tid] += sdata[tid + s];
-    //    }
-    //   __syncthreads();
-    //}
-    //__syncthreads();
+        // do reduction in shared mem
+    for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
+        if (tid < s) {
+            sdata[tid] += sdata[tid + s];
+        }
+       __syncthreads();
+    }
+    __syncthreads();
     
 //     write result for this block to global mem
     if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 
-}
+ }
 
 int main()
 {
@@ -135,15 +140,17 @@ cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, co
         fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
         goto Error;
     }
+    unsigned int BufferedSize = ceil(facetSize / (double)(2 * BLOCKSIZE)) * 2 * BLOCKSIZE;
 
     // Allocate GPU buffers for three vectors (two input, one output)    .
-    cudaStatus = cudaMalloc((void**)&dev_areaPerFace, facetSize * sizeof(float));
+    // round up areaPerFace so that every thread in every block can assign and do something
+    cudaStatus = cudaMalloc((void**)&dev_areaPerFace, BufferedSize * sizeof(float));
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
     }
-
-    cudaStatus = cudaMalloc((void**)&dev_areaSum, facetSize * sizeof(float)); // this should be facetSize/Num
+    unsigned int numSum = BufferedSize / BLOCKSIZE / 2;
+    cudaStatus = cudaMalloc((void**)&dev_areaSum, numSum * sizeof(float)); // this should be facetSize/Num
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
@@ -175,10 +182,10 @@ cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, co
     }
 
 
-
+    unsigned int areaNumBlock = ceil(BufferedSize / (double)BLOCKSIZE);
 
     // Launch a kernel on the GPU with one thread for each element.
-    areaKernel <<<ceil(facetSize/(double)BLOCKSIZE), BLOCKSIZE>>> (dev_areaPerFace, dev_vertices, dev_facets, facetSize);
+    areaKernel <<<areaNumBlock, BLOCKSIZE>>> (dev_areaPerFace, dev_vertices, dev_facets, facetSize);
 
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
@@ -191,9 +198,13 @@ cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, co
         goto Error;
     }
 
+    unsigned int addNumBlock = ceil(facetSize / (double)BLOCKSIZE / 2.0);
     // now sum the result
-    addTree <<<ceil(facetSize / (double)BLOCKSIZE /2.0), BLOCKSIZE >>> (dev_areaPerFace, dev_areaSum, facetSize);
+    addTree << <addNumBlock, BLOCKSIZE, BufferedSize / 2 * sizeof(float) >> > (dev_areaPerFace, dev_areaSum);
 
+    //for (int i = addNumBlock/ (BLOCKSIZE * 2); i > 1; i /= (BLOCKSIZE * 2)) {
+    //    addTree << <addNumBlock, BLOCKSIZE, BufferedSize / 2 * sizeof(float) >> > (dev_areaSum, dev_areaSum);
+    //}
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
