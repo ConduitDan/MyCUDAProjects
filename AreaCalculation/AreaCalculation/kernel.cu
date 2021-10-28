@@ -4,7 +4,7 @@
 #include <device_functions.h>
 #include <stdio.h>
 
-#define BLOCKSIZE 4
+#define BLOCKSIZE 2
 
 cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, const unsigned int* facets, \
     const unsigned int facetSize, float* areaPerFace, float* area);
@@ -198,13 +198,12 @@ cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, co
         goto Error;
     }
 
-    unsigned int addNumBlock = ceil(facetSize / (double)BLOCKSIZE / 2.0);
+    unsigned int addNumBlock = ceil(BufferedSize / (double)BLOCKSIZE / 2.0);
     // now sum the result
     addTree << <addNumBlock, BLOCKSIZE, BufferedSize / 2 * sizeof(float) >> > (dev_areaPerFace, dev_areaSum);
-
-    //for (int i = addNumBlock/ (BLOCKSIZE * 2); i > 1; i /= (BLOCKSIZE * 2)) {
-    //    addTree << <addNumBlock, BLOCKSIZE, BufferedSize / 2 * sizeof(float) >> > (dev_areaSum, dev_areaSum);
-    //}
+    for (int i = addNumBlock; i > 1; i /= (BLOCKSIZE * 2)) {
+        addTree << <ceil((double)addNumBlock/ (BLOCKSIZE * 2)), BLOCKSIZE, BufferedSize / 2 * sizeof(float) >> > (dev_areaSum, dev_areaSum);
+    }
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
