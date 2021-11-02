@@ -4,12 +4,16 @@
 #include <device_functions.h>
 #include <stdio.h>
 
+#include "./meshReader.h"
+#include <stdbool.h>  
+
+
 #define BLOCKSIZE 2
 
-cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, const unsigned int* facets, \
-    const unsigned int facetSize, float* areaPerFace, float* area);
+cudaError_t areaWithCuda(double* vertices, unsigned int  meshSize, unsigned int* facets, \
+    unsigned int facetSize, double* areaPerFace, double* area);
 
-__global__ void areaKernel(float *area, const float *vertices, const unsigned int * facets, const int size)
+__global__ void areaKernel(double *area, const double *vertices, const unsigned int * facets, const int size)
 {
     // given a set of vertices and facet [v0,v1,v2](list of indeices of vertices belonging to a face) fill in what the area of that face is
     
@@ -31,12 +35,38 @@ __global__ void areaKernel(float *area, const float *vertices, const unsigned in
     }
 }
 
+__global__ void areaKernel3d(double* area, const double* vertices, const unsigned int* facets, const int size)
+{
+    // given a set of vertices and facet [v0,v1,v2](list of indeices of vertices belonging to a face) fill in what the area of that face is
 
-__global__ void addTree(const float* g_idata, float* g_odata)
+    // formula is (x1*y2+x2*y3+x3*y1-y1*x2-y2*x3-y3*x1)/2 
+    // NOTE THIS CAN BE DONE MORE IN PARALLEL
+    // Check for vetorized instruction for cross product
+
+
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    // do i*3 because we have 3 vertcies per facet
+    // do facets[]*2 becasue we have x and y positions
+    double dx1 = vertices[facets[i * 3] * 3] - vertices[facets[i * 3 + 1] * 3];
+    double dx2 = vertices[facets[i * 3 + 1] * 3] - vertices[facets[i * 3 + 2] * 3];
+    double dy1 = vertices[facets[i * 3] * 3 + 1] - vertices[facets[i * 3 + 1] * 3 + 1];
+    double dy2 = vertices[facets[i * 3 + 1] * 3 + 1] - vertices[facets[i * 3 + 2] * 3 + 1];
+    double dz1 = vertices[facets[i * 3] * 3 + 2] - vertices[facets[i * 3 + 1] * 3 + 2];
+    double dz2 = vertices[facets[i * 3 + 1] * 3 + 2] - vertices[facets[i * 3 + 2] * 3 + 2];
+    if (i < size) {
+        area[i] = abs(dx1*(dy2-dz2)+dx2*(dz1-dy1) + dy1*dz2 - dz1*dy2)/2;
+    }
+    else {
+        area[i] = 0;
+    }
+}
+
+
+__global__ void addTree(const double* g_idata, double* g_odata)
 {
     //https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf
 
-    extern __shared__ float sdata[];
+    extern __shared__ double sdata[];
     // each thread loads one element from global to shared mem
     unsigned int tid = threadIdx.x; // get the id of this thread
     unsigned int i = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
@@ -62,9 +92,14 @@ __global__ void addTree(const float* g_idata, float* g_odata)
 
 int main()
 {
-    const int meshSize = 8;
-    const int facetSize = 6;
-    const float vertices[meshSize * 2] = {\
+
+    // read in mesh
+
+    unsigned int meshSize = 0;
+    unsigned int facetSize = 0;
+
+
+    /*const double vertices[meshSize * 2] = {\
         0,0,\
         1,0,\
         2,0,\
@@ -79,16 +114,26 @@ int main()
     //  x----x
     //  /\   /\ 
     // /  \ /  \
-    //x----x----x
-    const unsigned int facets[facetSize * 3] = { 0, 1, 3, \
+    //x----x----x*/
+    double* vertices = NULL;
+
+    /*const unsigned int facets[facetSize * 3] = {0, 1, 3, \
                                         3, 4, 1, \
                                         1, 2, 4, \
                                         3, 5, 6, \
                                         3, 6, 4, \
                                         6, 4, 7 };
-    float *areaPerFace = (float *) malloc(facetSize * sizeof(float));
-    float area = 0;
-    float areaCPU = 0;
+    */
+    unsigned int * facets = NULL;
+    bool readSuccess = readInMesh("sphere.mesh", vertices, facets, &meshSize, &facetSize);
+    if (!readSuccess) {
+        return -1;
+    }
+
+
+    double *areaPerFace = (double *) malloc(facetSize * sizeof(double));
+    double area = 0;
+    double areaCPU = 0;
     // Add vectors in parallel.
     cudaError_t cudaStatus = areaWithCuda(vertices, meshSize, facets, facetSize, areaPerFace, &area);
     if (cudaStatus != cudaSuccess) {
@@ -125,13 +170,13 @@ int main()
 }
 
 // Helper function for using CUDA to add vectors in parallel.
-cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, const unsigned int* facets, \
-    const unsigned int facetSize, float * areaPerFace, float * area)
+cudaError_t areaWithCuda(double* vertices, unsigned int  meshSize, unsigned int* facets, \
+    unsigned int facetSize, double * areaPerFace, double * area)
 {
-    float *dev_vertices = 0;
+    double *dev_vertices = 0;
     unsigned int *dev_facets = 0;
-    float *dev_areaPerFace = 0;
-    float *dev_areaSum = 0;
+    double *dev_areaPerFace = 0;
+    double *dev_areaSum = 0;
     cudaError_t cudaStatus;
 
     // Choose which GPU to run on, change this on a multi-GPU system.
@@ -144,19 +189,19 @@ cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, co
 
     // Allocate GPU buffers for three vectors (two input, one output)    .
     // round up areaPerFace so that every thread in every block can assign and do something
-    cudaStatus = cudaMalloc((void**)&dev_areaPerFace, BufferedSize * sizeof(float));
+    cudaStatus = cudaMalloc((void**)&dev_areaPerFace, BufferedSize * sizeof(double));
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
     }
     unsigned int numSum = BufferedSize / BLOCKSIZE / 2;
-    cudaStatus = cudaMalloc((void**)&dev_areaSum, numSum * sizeof(float)); // this should be facetSize/Num
+    cudaStatus = cudaMalloc((void**)&dev_areaSum, numSum * sizeof(double)); // this should be facetSize/Num
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
     }
 
-    cudaStatus = cudaMalloc((void**)&dev_vertices, 2 * meshSize * sizeof(float));
+    cudaStatus = cudaMalloc((void**)&dev_vertices, 2 * meshSize * sizeof(double));
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
@@ -169,7 +214,7 @@ cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, co
     }
 
     // Copy input vectors from host memory to GPU buffers.
-    cudaStatus = cudaMemcpy(dev_vertices, vertices, 2 * meshSize * sizeof(float), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_vertices, vertices, 2 * meshSize * sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed! vertices");
         goto Error;
@@ -185,7 +230,7 @@ cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, co
     unsigned int areaNumBlock = ceil(BufferedSize / (double)BLOCKSIZE);
 
     // Launch a kernel on the GPU with one thread for each element.
-    areaKernel <<<areaNumBlock, BLOCKSIZE>>> (dev_areaPerFace, dev_vertices, dev_facets, facetSize);
+    areaKernel3d <<<areaNumBlock, BLOCKSIZE>>> (dev_areaPerFace, dev_vertices, dev_facets, facetSize);
 
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
@@ -200,9 +245,9 @@ cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, co
 
     unsigned int addNumBlock = ceil(BufferedSize / (double)BLOCKSIZE / 2.0);
     // now sum the result
-    addTree << <addNumBlock, BLOCKSIZE, BufferedSize / 2 * sizeof(float) >> > (dev_areaPerFace, dev_areaSum);
+    addTree << <addNumBlock, BLOCKSIZE, BufferedSize / 2 * sizeof(double) >> > (dev_areaPerFace, dev_areaSum);
     for (int i = addNumBlock; i > 1; i /= (BLOCKSIZE * 2)) {
-        addTree << <ceil((double)addNumBlock/ (BLOCKSIZE * 2)), BLOCKSIZE, BufferedSize / 2 * sizeof(float) >> > (dev_areaSum, dev_areaSum);
+        addTree << <ceil((double)addNumBlock/ (BLOCKSIZE * 2)), BLOCKSIZE, BufferedSize / 2 * sizeof(double) >> > (dev_areaSum, dev_areaSum);
     }
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
@@ -225,12 +270,12 @@ cudaError_t areaWithCuda(const float* vertices, const unsigned int  meshSize, co
 
 
     // Copy output vector from GPU buffer to host memory.
-    cudaStatus = cudaMemcpy(areaPerFace, dev_areaPerFace, facetSize * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(areaPerFace, dev_areaPerFace, facetSize * sizeof(double), cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed! area per facet\n");
         goto Error;
     }
-    cudaStatus = cudaMemcpy(area, dev_areaSum,sizeof(float), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(area, dev_areaSum,sizeof(double), cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed! area\n");
         goto Error;
