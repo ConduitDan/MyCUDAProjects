@@ -2,18 +2,25 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <device_functions.h>
-#include <stdio.h>
+#include <thrust/device_vector.h>
 
+#include <Windowsnumerics.h>
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>  
 #include <string.h>
+#include <vector>
 
 #define BLOCKSIZE 2
 int getNumVertices(FILE* fp);
 int getNumFacets(FILE* fp);
-bool readInMesh(const char* fileName, float* verts, unsigned int* facets, unsigned int* nVert, unsigned int* nFace);
+bool readInMesh(const char* fileName, float3** verts, unsigned int** facets, unsigned int* nVert, unsigned int* nFace);
+void vertex2facetMaker(std::vector < std::tuple<unsigned int, unsigned int>>** vertex2facet, unsigned int facets[], unsigned int meshSize, unsigned int numFacets);
 
-cudaError_t areaWithCuda(float* vertices, unsigned int  meshSize, unsigned int* facets, \
+float3 operator*(const float alpha, const float3 v) { return make_float3(alpha * v.x, alpha * v.y, alpha * v.z); }
+
+cudaError_t areaWithCuda(float3* vertices, unsigned int  meshSize, unsigned int* facets, \
     unsigned int facetSize, float* areaPerFace, float* area);
 
 __global__ void areaKernel(float *area, const float *vertices, const unsigned int * facets, const int size)
@@ -63,7 +70,71 @@ __global__ void areaKernel3d(float* area, const float* vertices, const unsigned 
         area[i] = 0;
     }
 }
+__device__ float3 cross(float3 a,float3 b) {
+    return make_float3(a.y * b.z - a.z * b.y, b.x * a.z - a.x * b.z, a.x * b.y - b.x * a.y);
+}
 
+__device__ float dot(float3 a, float3 b) {
+    return float(a.x * b.x + a.y * b.y + a.z * b.z);
+}
+
+__device__ float norm(float3 a) {
+    return sqrt(dot(a, a));
+}
+__device__ float3 sub(float3 a, float3 b) {
+    return make_float3(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+__device__ float3 add(float3 a, float3 b) {
+    return make_float3(a.x + b.x, a.y + b.y, a.z + b.z);
+}
+
+__global__ void areaKernel3dVectorized(float* area, const float3* vertices, const unsigned int* facets, const int size)
+{
+    // given a set of vertices and facet [v0,v1,v2](list of indeices of vertices belonging to a face) fill in what the area of that face is
+
+    // formula is (x1*y2+x2*y3+x3*y1-y1*x2-y2*x3-y3*x1)/2 
+    // NOTE THIS CAN BE DONE MORE IN PARALLEL
+    // Check for vetorized instruction for cross product
+
+
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    // do i*3 because we have 3 vertcies per facet
+    // do facets[]*2 becasue we have x and y positions
+    
+    if (i < size) {
+        area[i] = norm(cross(sub(vertices[facets[i]], vertices[facets[i + 1]]), sub(vertices[facets[i]], vertices[facets[i + 2]])));
+    }
+    else {
+        area[i] = 0;
+    }
+}
+__global__ void areaGradVectorize(float3* delAreaFacet, const float3* vertices, const unsigned int* facets, const int size) {
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    float3 s0 = sub(vertices[facets[i * 3 + 1]], vertices[facets[i * 3]]);
+    float3 s1 = sub(vertices[facets[i * 3 + 2]], vertices[facets[i * 3 + 1]]);
+    float3 s01 = cross(s0, s1);
+    float snorm = norm(s01);
+    float3 s010 = cross(s01, s0);
+    float3 s011 = cross(s01, s1);
+    // here is the tricky bit, cannot assume that there are no 2 facets which don't share a 1st point;
+    // instead we could store these three 3vectors on the facet 
+    // create the vertex -> facet map 
+    // have each vertex go retrive its values and add them up
+    // we might be able to take advatage of that matrix stucture to store data smartly
+    
+    delAreaFacet[i * 3] = 0.5 / snorm * s011;
+    delAreaFacet[i * 3 + 2] = 0.5 / snorm * s010;
+    delAreaFacet[i * 3 + 1] = -0.5 / snorm * cross(s010, s011);
+}
+
+__global__ void areaGradVertex(float3* delAreaVertex, const float3* delAreaFacet, const std::vector <std::tuple <unsigned int, unsigned int>>* vertex2facet[]) {
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    //vertex2facet contains tuples of (facet, vertex# on facet)
+    delAreaVertex[i] = make_float3(0.0, 0.0, 0.0);
+    for (std::vector <std::tuple<unsigned int, unsigned int>>::iterator index = vertex2facet[i].begin(); index != vertex2facet[i].end(); index++) {
+        delAreaVertex[i] = add(delAreaVertex[i], delAreaFacet[std::get<0>(*index) * 3 + std::get<1>(*index)]);
+    }
+}
 
 __global__ void addTree(const float* g_idata, float* g_odata)
 {
@@ -100,42 +171,33 @@ int main()
 
     unsigned int meshSize = 0;
     unsigned int facetSize = 0;
+    float3* vertices = NULL;
 
-
-    /*const float vertices[meshSize * 2] = {\
-        0,0,\
-        1,0,\
-        2,0,\
-        0.5,1,\
-        1.5,1,\
-        0,2,\
-        1,2,\
-        2,2 };
-    //x---x---x
-    // \  /\  /
-    //  \/  \/
-    //  x----x
-    //  /\   /\ 
-    // /  \ /  \
-    //x----x----x*/
-    float* vertices = NULL;
-
-    /*const unsigned int facets[facetSize * 3] = {0, 1, 3, \
-                                        3, 4, 1, \
-                                        1, 2, 4, \
-                                        3, 5, 6, \
-                                        3, 6, 4, \
-                                        6, 4, 7 };
-    */
     unsigned int * facets = NULL;
-    bool readSuccess = readInMesh("sphere.mesh", vertices, facets, &meshSize, &facetSize);
+    bool checkMesh = false;
+
+    bool readSuccess = readInMesh("sphere.mesh", &vertices, &facets, &meshSize, &facetSize);
     if (!readSuccess) {
         fprintf(stderr, "failed to read in mesh");
         return -1;
     }
     fprintf(stdout, "Read in mesh with %d vertices and %d faces\n", meshSize, facetSize);
 
+    if (checkMesh) {
+        fprintf(stdout, "Vertices:\n");
+        for (int i = 0; i < meshSize; i++) {
+            fprintf(stdout, "%d: (%f, %f, %f)\n", i, vertices[i].x, vertices[i].y, vertices[i].z);
+        }
+        fprintf(stdout, "Faces:\n");
+        for (int i = 0; i < facetSize; i++) {
+            fprintf(stdout, "%d: (%d, %d, %d)\n", i, facets[i], facets[i + 1], facets[i + 2]);
+        }
+    }
 
+    std::vector < std::tuple<unsigned int, unsigned int>>* vertex2facet = NULL; 
+    vertex2facetMaker(&vertex2facet, facets, meshSize, facetSize);
+
+    
     float *areaPerFace = (float *) malloc(facetSize * sizeof(float));
     float area = 0;
     float areaCPU = 0;
@@ -175,10 +237,10 @@ int main()
 }
 
 // Helper function for using CUDA to add vectors in parallel.
-cudaError_t areaWithCuda(float* vertices, unsigned int  meshSize, unsigned int* facets, \
+cudaError_t areaWithCuda(float3* vertices, unsigned int  meshSize, unsigned int* facets, \
     unsigned int facetSize, float * areaPerFace, float * area)
 {
-    float *dev_vertices = 0;
+    float3 *dev_vertices = 0;
     unsigned int *dev_facets = 0;
     float *dev_areaPerFace = 0;
     float *dev_areaSum = 0;
@@ -206,7 +268,7 @@ cudaError_t areaWithCuda(float* vertices, unsigned int  meshSize, unsigned int* 
         goto Error;
     }
 
-    cudaStatus = cudaMalloc((void**)&dev_vertices, 2 * meshSize * sizeof(float));
+    cudaStatus = cudaMalloc((void**)&dev_vertices, meshSize * sizeof(float3));
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
@@ -219,7 +281,8 @@ cudaError_t areaWithCuda(float* vertices, unsigned int  meshSize, unsigned int* 
     }
 
     // Copy input vectors from host memory to GPU buffers.
-    cudaStatus = cudaMemcpy(dev_vertices, vertices, 3 * meshSize * sizeof(float), cudaMemcpyHostToDevice);
+    //    cudaStatus = cudaMemcpy(dev_a, a, size * sizeof(int), cudaMemcpyHostToDevice)
+    cudaStatus = cudaMemcpy(dev_vertices, vertices, meshSize * sizeof(float3), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed! vertices\n");
         goto Error;
@@ -235,7 +298,7 @@ cudaError_t areaWithCuda(float* vertices, unsigned int  meshSize, unsigned int* 
     unsigned int areaNumBlock = ceil(BufferedSize / (float)BLOCKSIZE);
 
     // Launch a kernel on the GPU with one thread for each element.
-    areaKernel3d <<<areaNumBlock, BLOCKSIZE>>> (dev_areaPerFace, dev_vertices, dev_facets, facetSize);
+    areaKernel3dVectorized <<<areaNumBlock, BLOCKSIZE>>> (dev_areaPerFace, dev_vertices, dev_facets, facetSize);
 
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
@@ -342,7 +405,7 @@ int getNumFacets(FILE* fp) {
 }
 
 
-bool readInMesh(const char* fileName, float* verts, unsigned int* facets, unsigned int* nVert, unsigned int* nFace) {
+bool readInMesh(const char* fileName, float3** verts, unsigned int** facets, unsigned int* nVert, unsigned int* nFace) {
     FILE* fp;
     char* line = NULL;
     size_t len = 0;
@@ -359,8 +422,8 @@ bool readInMesh(const char* fileName, float* verts, unsigned int* facets, unsign
     *nVert = getNumVertices(fp);
     *nFace = getNumFacets(fp);
 
-    verts = (float*)malloc(*nVert * 3 * sizeof(float)); // [x0; y0; z0; x1; y1;.... ]
-    facets = (unsigned int*)malloc(*nFace * 3 * sizeof(unsigned int));// [a0; b0; c0; a1;b1;c1;...]
+    *verts = (float3*)malloc(*nVert * sizeof(float3)); // [x0; y0; z0; x1; y1;.... ]
+    *facets = (unsigned int*)malloc(*nFace * 3 * sizeof(unsigned int));// [a0; b0; c0; a1;b1;c1;...]
 
 
     rewind(fp); // rewind the file to the beginning
@@ -381,10 +444,7 @@ bool readInMesh(const char* fileName, float* verts, unsigned int* facets, unsign
             fprintf(stderr, "bad file format\n");
             return false;
         }
-        verts[i * 3] = (float) tmp0;
-        verts[i * 3 + 1] = (float) tmp1;
-        verts[i * 3 + 2] = (float) tmp2;
-
+        (*verts)[i] = make_float3(tmp0, tmp1, tmp2);
     }
 
     fscanf(fp, "%*d");
@@ -398,13 +458,25 @@ bool readInMesh(const char* fileName, float* verts, unsigned int* facets, unsign
     }
 
     for (int i = 0; i < *nFace; i++) {
-        numAssigned = fscanf(fp, "%*d %d %d %d\n", &facets[i * 3], &facets[i * 3 + 1], &facets[i * 3 + 2]);
+        numAssigned = fscanf(fp, "%*d %d %d %d\n", (*facets) + i * 3, (*facets) + i * 3 + 1, (*facets) + i * 3 + 2);
         if (numAssigned < 3) {
             fprintf(stderr, "bad file format for faces\n");
             return false;
         }
+        (*facets)[i * 3] --;
+        (*facets)[i * 3 + 1] --;
+        (*facets)[i * 3 + 2] --;
 
     }
     return true;
 
+}
+
+void vertex2facetMaker(std::vector < std::tuple<unsigned int, unsigned int>>** vertex2facet, unsigned int facets[],unsigned int meshSize,unsigned int numFacets) {
+    *vertex2facet = new std::vector < std::tuple<unsigned int, unsigned int>>[meshSize];
+    for (int i = 0; i < numFacets; i++) {
+        for (int j = 0; j < 3; j++) {
+            (*vertex2facet)[facets[i * 3 + j]].push_back(std::tuple <unsigned int, unsigned int>{i, j});
+        }
+    }
 }
