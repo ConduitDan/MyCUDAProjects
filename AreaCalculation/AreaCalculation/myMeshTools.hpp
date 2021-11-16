@@ -10,6 +10,7 @@ private:
 
 public:
 	bool readInMesh(const char* fileName, float3** verts, unsigned int** facets, unsigned int* nVert, unsigned int* nFace);
+	bool readInMesh(const char* fileName, Mesh* myMesh);
 
 
 

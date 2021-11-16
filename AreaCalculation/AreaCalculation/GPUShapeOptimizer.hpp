@@ -25,8 +25,7 @@ private:
     unsigned int meshSize = 0;
     unsigned int facetSize = 0;
  
-    float3* vertices = NULL;
-    unsigned int* facets = NULL;
+    
 
     std::vector < std::tuple<unsigned int, unsigned int>>* vertex2facet = NULL;
 

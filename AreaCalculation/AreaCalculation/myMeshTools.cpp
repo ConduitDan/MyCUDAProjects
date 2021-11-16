@@ -48,6 +48,9 @@ int myMeshTools::getNumFacets(FILE* fp) {
 }
 
 
+bool myMeshTools::readInMesh(const char* fileName, Mesh mymesh) {
+
+}
 
 
 bool myMeshTools::readInMesh(const char* fileName, float3** verts, unsigned int** facets, unsigned int* nVert, unsigned int* nFace) {
