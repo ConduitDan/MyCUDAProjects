@@ -26,8 +26,8 @@ updateFromGradient(Gradeint)</panel_attributes>
     <coordinates>
       <x>790</x>
       <y>400</y>
-      <w>550</w>
-      <h>240</h>
+      <w>560</w>
+      <h>260</h>
     </coordinates>
     <panel_attributes>DeviceMesh
 --
