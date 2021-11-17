@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.morpho": "javascript",
+        "__config": "cpp",
+        "__nullptr": "cpp"
+    }
+}
