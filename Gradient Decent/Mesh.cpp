@@ -130,3 +130,35 @@ bool Mesh::load_mesh_from_file(const char* fileName) {
     }
     return true;
 }
+
+
+
+DeviceMesh::DeviceMesh(Mesh){
+
+      cudaError_t cudaStatus;
+
+      // copy over the vertices and facets
+      
+
+
+
+
+    // Choose which GPU to run on, change this on a multi-GPU system.
+    cudaStatus = cudaSetDevice(0);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
+        goto Error;
+    }
+    unsigned int BufferedSize = ceil(facetSize / (float)(2 * BLOCKSIZE)) * 2 * BLOCKSIZE;
+
+    // Allocate GPU buffers for three vectors (two input, one output)    .
+    // round up areaPerFace so that every thread in every block can assign and do something
+    cudaStatus = cudaMalloc((void**)&dev_areaPerFace, BufferedSize * sizeof(float));
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+
+
+
+
+}

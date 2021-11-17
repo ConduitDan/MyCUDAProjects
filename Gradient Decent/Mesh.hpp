@@ -39,7 +39,12 @@ public:
 	bool load_mesh_from_file(const char*);
 };
 
-class DeviceMesh (Mesh){
+class DeviceMesh{
+    unsigned int _numVert = 0;
+	unsigned int _numFacets = 0;
+	double* _vert = NULL;
+	unsigned int* _facets = NULL;
+
 
 public:
 	DeviceMesh(Mesh); //copies a Mesh over to the device 
