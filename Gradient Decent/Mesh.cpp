@@ -11,7 +11,11 @@ Mesh::Mesh(const char* fileName){
 
 }
 
+Mesh::~Mesh(){
 
+    if (_vert) delete _vert;
+    if (_facets) delete _facets;
+}
 
 
 
@@ -133,32 +137,157 @@ bool Mesh::load_mesh_from_file(const char* fileName) {
 
 
 
-DeviceMesh::DeviceMesh(Mesh){
-
-      cudaError_t cudaStatus;
-
-      // copy over the vertices and facets
-      
-
-
-
-
-    // Choose which GPU to run on, change this on a multi-GPU system.
-    cudaStatus = cudaSetDevice(0);
-    if (cudaStatus != cudaSuccess) {
+DeviceMesh::DeviceMesh(Mesh hostMesh, unsigned int blockSize){
+    // set up the GPU 
+    _cudaStatus = cudaSetDevice(0);
+    if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
-        goto Error;
     }
-    unsigned int BufferedSize = ceil(facetSize / (float)(2 * BLOCKSIZE)) * 2 * BLOCKSIZE;
 
-    // Allocate GPU buffers for three vectors (two input, one output)    .
-    // round up areaPerFace so that every thread in every block can assign and do something
-    cudaStatus = cudaMalloc((void**)&dev_areaPerFace, BufferedSize * sizeof(float));
-    if (cudaStatus != cudaSuccess) {
+    
+    
+    // copy over the number of elements
+    _numFacets = hostMesh.get_numFacets();
+    _numVert = hostMesh.get_numVert();
+
+    // create the vertex-><facets, # in facet> map
+    // there should be 3*_numfacets values in the map.
+    // we should store a compaion array with the starting index for vertex i in the map
+
+    unsigned int *vertToFacet  = new unsigned int [_numFacets * 3] {0};// (store i*3 + j);
+    //unsigned int *vertToFacetIndex = new unsigned int [_numFacets * 3] {0};
+    unsigned int *vertIndexStart = new unsigned int [_numVert+1] {0}; // + one more here so we have[0...numVert] to make logic simpler for first or last ele
+    unsigned int *vertCount = new unsigned int [_numVert] {0};
+
+    // TODO: memset here
+    
+    unsigned int* hostFacets = hostMesh.get_facets();
+
+    // first fill out how many facets each vertex participates in; 
+    for (int i = 0; i<_numFacets * 3; i++){
+        vertIndexStart[*(hostFacets+i)+1]++;
+    }
+    // add the previous entry so it now marks where the entries end for this vertex
+    for (int i = 0; i<_numVert; i++){
+        vertIndexStart[i+1]+=vertIndexStart[i];
+    }
+    unsigned int index;
+    unsigned int vertex; 
+    for (int i = 0; i<_numFacets*3; i++){
+
+        vertex = *(hostFacets + i);
+        index = vertIndexStart[vertex]+vertCount[vertex];
+
+        vertToFacet[index] = i;
+        vertCount[vertex]++;
+    }
+
+    
+
+
+
+
+
+    _blockSize = blockSize;
+
+
+    //unsigned int BufferedSize = ceil(_numFacets / (float)(2 * blockSize)) * 2 * blockSize; // for 
+
+    // Allocate GPU buffers for vertices and facets 
+
+    _cudaStatus = cudaMalloc((void**)&_vert, _numVert * 3 * sizeof(double));
+    if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
     }
 
+    _cudaStatus = cudaMalloc((void**)&_facets, _numFacets * 3 * sizeof(unsigned int));
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+    _cudaStatus = cudaMalloc((void**)&_vertToFacet, _numFacets * 3 * sizeof(unsigned int));
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+    _cudaStatus = cudaMalloc((void**)&_vertIndexStart, _numVert * sizeof(unsigned int));
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+    
 
+
+    // copy over the vertices and facets
+    _cudaStatus = cudaMemcpy(_vert, hostMesh.get_vert(), _numVert * 3 * sizeof(double), cudaMemcpyHostToDevice);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMemcpy failed! vertices\n");
+    }
+    _cudaStatus = cudaMemcpy(_facets, hostMesh.get_facets(), _numFacets * 3 * sizeof(unsigned int), cudaMemcpyHostToDevice);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMemcpy failed! vertices\n");
+    }
+        _cudaStatus = cudaMemcpy(_vertToFacet, vertToFacet, _numFacets * 3 * sizeof(unsigned int), cudaMemcpyHostToDevice);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMemcpy failed! vertices\n");
+    }
+    _cudaStatus = cudaMemcpy(_vertIndexStart, vertIndexStart, _numVert * sizeof(unsigned int), cudaMemcpyHostToDevice);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMemcpy failed! vertices\n");
+    }
+
+
+
+
+    delete[] vertToFacet;
+    delete[] vertIndexStart;
+    delete[] vertCount;
+
+}
+
+DeviceMesh::~DeviceMesh(){
+    if (_vert) cudaFree(_vert);
+    if (_facets) cudaFree(_facets);
+    if (_vertToFacet) cudaFree(_facets);
+    if (_vertIndexStart) cudaFree(_facets);
+    if (_area) cudaFree(_area);
+    if (_areaSum) cudaFree(_areaSum);
+    if (_volume) cudaFree(_volume);
+    if (_volumeSum) cudaFree(_volumeSum);
+}
+
+Mesh DeviceMesh::copy_to_host(){
+    Mesh newMesh;
+    newMesh._numVert = _numVert;
+    newMesh._numFacets = _numFacets;
+    newMesh._vert = new double[_numVert * 3]; // [x0; y0; z0; x1; y1;.... ]
+    newMesh._facets =  new unsigned int[_numFacets * 3];;// [a0; b0; c0; a1;b1;c1;...]
+
+    _cudaStatus = cudaMemcpy(newMesh._vert, _vert, _numVert * 3 *  sizeof(double), cudaMemcpyDeviceToHost);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMemcpy failed!\n");
+    }
+
+    _cudaStatus = cudaMemcpy(newMesh._facets, _facets, _numFacets * 3 *  sizeof(unsigned int), cudaMemcpyDeviceToHost);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMemcpy failed!\n");
+    }
+
+
+    return newMesh;
+}
+
+double DeviceMesh::area(){
+
+    
+}
+
+double DeviceMesh::volume(){
+
+
+}
+
+
+void DeviceMesh::decend_gradient(Gradient myGrad){
+    // call vector add kerenal with force pointer and vertex pointer
+    
 
 
 }
