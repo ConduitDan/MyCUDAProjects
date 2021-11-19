@@ -2,6 +2,7 @@
 #ifndef Mesh_hpp
 #define Mesh_hpp
 
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include "cuda.h"
@@ -10,7 +11,8 @@
 #include <device_functions.h>
 
 // [x] Write DeviceMesh stuff that need to happen on the CPU 
-// [ ] write everything around the kernals for device mesh and gradient
+// [x] write everything around the kernals for device mesh
+// [ ] write everything around the kernals for gradient
 // [ ] write kernals
 // [ ] write the __device__ util functions
 // [ ] write the print for the mesh
@@ -70,22 +72,34 @@ private:
 
     cudaError_t _cudaStatus;
 	unsigned int _blockSize;
-
+	
+	double sum_of_elements(double* ,unsigned int);
+	void cuda_sync_and_check();
 
 public:
 	DeviceMesh(Mesh,unsigned int); //copies a Mesh over to the device 
 	~DeviceMesh();
 
 	Mesh copy_to_host();
-	void decend_gradient(Gradient);
+	void decend_gradient(Gradient*,double);
 
 	double volume();
 	double area();
+
+	unsigned int get_numVert(){ return _numVert; }
+	unsigned int get_numFacets(){ return _numFacets; }
+	unsigned int get_blockSize(){ return _blockSize; }
+	double* get_vert() { return _vert; }
+	unsigned int* get_facets(){ return _facets; }
+	unsigned int* get_vertToFacet(){ return _vertToFacet; }
+	unsigned int* get_vertIndexStart(){ return _vertIndexStart; }
+
+
 };
 
 class Gradient{
 private:
-	Mesh * myMesh;
+	DeviceMesh * _myMesh;
 
 	double *_gradAFacet = nullptr;
 	double *_gradAVert = nullptr;
@@ -95,14 +109,26 @@ private:
 
 	double *_force = nullptr;
 
+	cudaError_t _cudaStatus;
+
+
 	void calc_gradA();
 	void calc_gradV();
+	void facet_to_vertex(double*, double*);
 	void project_to_force();
+	void cuda_sync_and_check();
+
+
 
 public:
+	Gradient(DeviceMesh*);
+	~Gradient();
 	void calc_force();
+
 	double* get_force(){return _force;}
 };
+
+
 
 
 #endif

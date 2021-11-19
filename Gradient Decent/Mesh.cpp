@@ -204,6 +204,8 @@ DeviceMesh::DeviceMesh(Mesh hostMesh, unsigned int blockSize){
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
     }
+
+    // and the map for vertex-> facet
     _cudaStatus = cudaMalloc((void**)&_vertToFacet, _numFacets * 3 * sizeof(unsigned int));
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
@@ -212,6 +214,16 @@ DeviceMesh::DeviceMesh(Mesh hostMesh, unsigned int blockSize){
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
     }
+    // and the area and volume 
+    _cudaStatus = cudaMalloc((void**)&_area, _numFacets * sizeof(double));
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+    _cudaStatus = cudaMalloc((void**)&_volume, _numFacets * sizeof(double));
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+
     
 
 
@@ -224,6 +236,7 @@ DeviceMesh::DeviceMesh(Mesh hostMesh, unsigned int blockSize){
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed! vertices\n");
     }
+    // and the map for vertex-> facet
         _cudaStatus = cudaMemcpy(_vertToFacet, vertToFacet, _numFacets * 3 * sizeof(unsigned int), cudaMemcpyHostToDevice);
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed! vertices\n");
@@ -232,6 +245,7 @@ DeviceMesh::DeviceMesh(Mesh hostMesh, unsigned int blockSize){
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed! vertices\n");
     }
+
 
 
 
@@ -248,9 +262,9 @@ DeviceMesh::~DeviceMesh(){
     if (_vertToFacet) cudaFree(_facets);
     if (_vertIndexStart) cudaFree(_facets);
     if (_area) cudaFree(_area);
-    if (_areaSum) cudaFree(_areaSum);
+    //if (_areaSum) cudaFree(_areaSum);
     if (_volume) cudaFree(_volume);
-    if (_volumeSum) cudaFree(_volumeSum);
+    //if (_volumeSum) cudaFree(_volumeSum);
 }
 
 Mesh DeviceMesh::copy_to_host(){
@@ -276,18 +290,162 @@ Mesh DeviceMesh::copy_to_host(){
 
 double DeviceMesh::area(){
 
-    
+    unsigned int numberOfBlocks = ceil(_numFacets / (float) _blockSize);
+    areaKernel<<<numberOfBlocks, _blockSize>>> (_area, _vert, _facets, _numFacets);
+    cuda_sync_and_check()
 }
 
 double DeviceMesh::volume(){
+    unsigned int numberOfBlocks = ceil(_numFacets / (float) _blockSize);
 
+    volumeKernel<<<numberOfBlocks, _blockSize>>> (_area, _vert, _facets, _numFacets);
+
+    cuda_sync_and_check()
 
 }
 
+double DeviceMesh::sum_of_elements(double* _vec,unsigned int size){
 
-void DeviceMesh::decend_gradient(Gradient myGrad){
+    double* out;
+
+    // do the reduction each step sums _blockSize*2 number of elements
+    unsigned int numberOfBlocks = ceil(size / (float) _blockSize / 2.0);
+     addTree<<<numberOfBlocks, BLOCKSIZE, BufferedSize / 2 * sizeof(double) >>> (_area, _area);
+
+    for (int i = numberOfBlocks; i > 1; i /= (_blockSize * 2)) {
+      addTree<<<ceil((float)numberOfBlocks/ (_blockSize * 2)), _blockSize, ceil((float)size / 2)* sizeof(double) >>> (_vec, _vec);
+    } 
+    cuda_sync_and_check()
+
+    // copy the 0th element out of the vector now that it contains the sum
+    _cudaStatus = cudaMemcpy(out, _vec,sizeof(double), cudaMemcpyDeviceToHost);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMemcpy failed! area\n");
+    throw;
+    }
+
+
+    return *out;
+
+}
+
+void DeviceMesh::cuda_sync_and_check(){
+    _cudaStatus = cudaGetLastError();
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(_cudaStatus));
+        throw;
+    }
+    // check that the kernal didn't throw an error
+    _cudaStatus = cudaDeviceSynchronize();
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaDeviceSynchronize returned error %s after launching Kernel!\n", cudaGetErrorString(_cudaStatus));
+        throw;
+    }
+
+}
+
+void DeviceMesh::decend_gradient(Gradient *myGrad,double lambda){
+
+    unsigned int numberOfBlocks = ceil(_numFacets / (float) _blockSize);
+
     // call vector add kerenal with force pointer and vertex pointer
-    
+    addWithMultKernel<<<numberOfBlocks,_blockSize>>>(_vert ,myGrad->get_force(),lambda)
+    cuda_sync_and_check()
 
+}
+
+Gradient::Gradient(DeviceMesh *inMesh){
+    _myMesh = inMesh;
+    unsigned int numVert = _myMesh->get_numVert();
+    unsigned int numFacet = _myMesh->get_numFacet();
+
+    _cudaStatus = cudaMalloc((void**)&_gradAFacet, numFacet * 3 * 3 * sizeof(double));
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+        _cudaStatus = cudaMalloc((void**)&_gradAVert, numVert * 3 * sizeof(double));
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+
+        _cudaStatus = cudaMalloc((void**)&_gradVFacet, numFacet * 3 * 3 * sizeof(double));
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+        _cudaStatus = cudaMalloc((void**)&_gradVFacet, numVert * 3 * sizeof(double));
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+
+
+        _cudaStatus = cudaMalloc((void**)&_force, numVert * 3 * sizeof(double));
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+};
+
+Gradient::~Gradient(){
+    if (_gradAFacet) cudaFree(_gradAFacet);
+    if (_gradAVert) cudaFree(_gradAVert);
+    if (_gradVFacet) cudaFree(_gradVFacet);
+    if (_gradVVert) cudaFree(_gradVVert);
+    if (_force) cudaFree(_force);
+
+}
+    
+    
+void Gradient::calc_force(){
+    calc_gradA();
+	calc_gradV();
+	project_to_force();
+}
+
+void Gradient::calc_gradA(){
+    // first calculate the gradient on the facets
+    unsigned int numberOfBlocks = ceil(_myMesh->get_numFacets() / (float) _myMesh->get_blockSize());
+    areaGradient<<<numberOfBlocks,_myMesh->get_blockSize()>>>(_gradAFacet,_myMesh->get_facets(),_myMesh->get_verts());
+    cuda_sync_and_check();
+
+    facet_to_vertex(_gradAFacet,_gradAVert);
+
+}
+
+void Gradient::calc_gradV(){
+    // first calculate the gradient on the facets
+    unsigned int numberOfBlocks = ceil(_myMesh->get_numFacets() / (float) _myMesh->get_blockSize());
+    volumeGradient<<<numberOfBlocks,_myMesh->get_blockSize()>>>(_gradVFacet,_myMesh->get_facets(),_myMesh->get_verts());
+    cuda_sync_and_check();
+
+    facet_to_vertex(_gradVFacet,_gradVVert);
+
+}
+
+void Gradient::facet_to_vertex(_facetValue,_vertexValue){
+
+    unsigned int numberOfBlocks = ceil(_myMesh->get_numVert() / (float) _myMesh->get_blockSize());
+    facetToVertex<<<<<<numberOfBlocks,_myMesh->get_blockSize()>>>(_vertexValue,_facetValue,_myMesh->get_vertToFacet(), _myMesh->get_vertIndexStart)
+    cuda_sync_and_check();
+
+}
+void Gradient::project_to_force(){
+
+    unsigned int numberOfBlocks = ceil(_myMesh->get_numVert() / (float) _myMesh->get_blockSize());
+    projectForce<<<numberOfBlocks,_myMesh->get_blockSize()>>>(_force,_gradAVert,_gradVVert);
+    cuda_sync_and_check();
+
+}
+
+void Gradient::cuda_sync_and_check(){
+    _cudaStatus = cudaGetLastError();
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(_cudaStatus));
+        throw;
+    }
+    // check that the kernal didn't throw an error
+    _cudaStatus = cudaDeviceSynchronize();
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaDeviceSynchronize returned error %s after launching Kernel!\n", cudaGetErrorString(_cudaStatus));
+        throw;
+    }
 
 }
