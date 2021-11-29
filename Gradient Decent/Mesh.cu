@@ -1,5 +1,4 @@
 #include "Mesh.hpp"
-#include "Kernals.cu"
 
 
 Mesh::Mesh(const char* fileName){
@@ -138,7 +137,7 @@ bool Mesh::load_mesh_from_file(const char* fileName) {
 
 
 
-DeviceMesh::DeviceMesh(Mesh hostMesh, unsigned int blockSize){
+DeviceMesh::DeviceMesh(Mesh* hostMesh, unsigned int blockSize){
     // set up the GPU 
     _cudaStatus = cudaSetDevice(0);
     if (_cudaStatus != cudaSuccess) {
@@ -148,8 +147,8 @@ DeviceMesh::DeviceMesh(Mesh hostMesh, unsigned int blockSize){
     
     
     // copy over the number of elements
-    _numFacets = hostMesh.get_numFacets();
-    _numVert = hostMesh.get_numVert();
+    _numFacets = hostMesh->get_numFacets();
+    _numVert = hostMesh->get_numVert();
 
     // create the vertex-><facets, # in facet> map
     // there should be 3*_numfacets values in the map.
@@ -162,7 +161,7 @@ DeviceMesh::DeviceMesh(Mesh hostMesh, unsigned int blockSize){
 
     // TODO: memset here
     
-    unsigned int* hostFacets = hostMesh.get_facets();
+    unsigned int* hostFacets = hostMesh->get_facets();
 
     // first fill out how many facets each vertex participates in; 
     for (int i = 0; i<_numFacets * 3; i++){
@@ -192,7 +191,7 @@ DeviceMesh::DeviceMesh(Mesh hostMesh, unsigned int blockSize){
     _blockSize = blockSize;
 
 
-    //unsigned int BufferedSize = ceil(_numFacets / (float)(2 * blockSize)) * 2 * blockSize; // for 
+    unsigned int bufferedSize = ceil(_numFacets / (float)( blockSize)) *  blockSize; // for 
 
     // Allocate GPU buffers for vertices and facets 
 
@@ -216,11 +215,11 @@ DeviceMesh::DeviceMesh(Mesh hostMesh, unsigned int blockSize){
         fprintf(stderr, "cudaMalloc failed!");
     }
     // and the area and volume 
-    _cudaStatus = cudaMalloc((void**)&_area, _numFacets * sizeof(double));
+    _cudaStatus = cudaMalloc((void**)&_area, bufferedSize * sizeof(double));
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
     }
-    _cudaStatus = cudaMalloc((void**)&_volume, _numFacets * sizeof(double));
+    _cudaStatus = cudaMalloc((void**)&_volume, bufferedSize * sizeof(double));
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
     }
@@ -229,11 +228,11 @@ DeviceMesh::DeviceMesh(Mesh hostMesh, unsigned int blockSize){
 
 
     // copy over the vertices and facets
-    _cudaStatus = cudaMemcpy(_vert, hostMesh.get_vert(), _numVert * 3 * sizeof(double), cudaMemcpyHostToDevice);
+    _cudaStatus = cudaMemcpy(_vert, hostMesh->get_vert(), _numVert * 3 * sizeof(double), cudaMemcpyHostToDevice);
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed! vertices\n");
     }
-    _cudaStatus = cudaMemcpy(_facets, hostMesh.get_facets(), _numFacets * 3 * sizeof(unsigned int), cudaMemcpyHostToDevice);
+    _cudaStatus = cudaMemcpy(_facets, hostMesh->get_facets(), _numFacets * 3 * sizeof(unsigned int), cudaMemcpyHostToDevice);
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed! vertices\n");
     }

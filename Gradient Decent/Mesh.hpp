@@ -9,12 +9,14 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <device_functions.h>
+#include "Kernals.h"
 
 // [x] Write DeviceMesh stuff that need to happen on the CPU 
 // [x] write everything around the kernals for device mesh
 // [x] write everything around the kernals for gradient
-// [ ] write kernals
-// [ ] write the __device__ util functions
+// [x] write kernals
+// [x] write the __device__ util functions
+// [x] get the correct size allocation for area and volume vectors (for add tree)
 // [ ] write the print for the mesh
 // [ ] write the optimizer 
 // [ ] let meshes constuct via pointer assignment (removes need for freind)
@@ -62,8 +64,8 @@ private:
 	unsigned int* _facets = nullptr;
 
 	// arrays holding the map from vertex to <facet, # in facet>
-    unsigned int* _vertToFacet;
-    unsigned int* _vertIndexStart;
+    unsigned int* _vertToFacet; // the a list of facet indcies sorted by vertex
+    unsigned int* _vertIndexStart; // where the indcies in vertToFacet start for a vertex 
 
 
 	double* _area = nullptr; // holds the area per facet
@@ -79,7 +81,7 @@ private:
 	void cuda_sync_and_check();
 
 public:
-	DeviceMesh(Mesh,unsigned int); //copies a Mesh over to the device 
+	DeviceMesh(Mesh*,unsigned int); //copies a Mesh over to the device 
 	~DeviceMesh();
 
 	Mesh copy_to_host();

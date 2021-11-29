@@ -1,15 +1,7 @@
 // Kernals.cu
 // here is where all the device and global functions live
 
-__global__ void areaKernel(double * area, double * vert, unsigned int * facets, unsigned int numFacets);
-__global__ void volumeKernel(double * volume, double * vert, unsigned int * facets, unsigned int numFacets);
-__global__ void addTree(const double * in, double * out,unsigned int size);
-__global__ void addWithMultKernel(double *a ,double *b,double lambda, unsigned int size); // a += b * lambda
-__global__ void areaGradient(double* gradAFacet, unsigned int* facets,double* verts,unsigned int numFacets);
-__global__ void volumeGradient(double* gradVFacet, unsigned int* facets,double* verts,unsigned int numFacets);
-__global__ void facetToVertex(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart,unsigned int numVert);
-__global__ void projectForce(double* force,double* gradAVert,double* gradVVert,unsigned int numVert);
-
+#include Kernals.h
 __device__ void vectorSub(double * v1, double * v2, double * vOut){
     
     *vOut = *v1-*v2;
@@ -41,7 +33,7 @@ __device__ double dot(double *a, double *b, double *c) {
      return ((*a) * (*b) + (*(a+1)) * (*(b+1)) + (*(a+2)) * (*(b+2)));
 }
 
-__device__ float norm(double *a) {
+__device__ double norm(double *a) {
     return sqrt(dot(a, a));
 }
 
