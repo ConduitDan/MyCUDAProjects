@@ -12,11 +12,13 @@
 
 // [x] Write DeviceMesh stuff that need to happen on the CPU 
 // [x] write everything around the kernals for device mesh
-// [ ] write everything around the kernals for gradient
+// [x] write everything around the kernals for gradient
 // [ ] write kernals
 // [ ] write the __device__ util functions
 // [ ] write the print for the mesh
-// [ ] write the optimizer class
+// [ ] write the optimizer 
+// [ ] let meshes constuct via pointer assignment (removes need for freind)
+// [ ] write tests
 
 class Mesh {
 private:

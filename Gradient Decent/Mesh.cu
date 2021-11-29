@@ -1,4 +1,5 @@
 #include "Mesh.hpp"
+#include "Kernals.cu"
 
 
 Mesh::Mesh(const char* fileName){
@@ -292,15 +293,18 @@ double DeviceMesh::area(){
 
     unsigned int numberOfBlocks = ceil(_numFacets / (float) _blockSize);
     areaKernel<<<numberOfBlocks, _blockSize>>> (_area, _vert, _facets, _numFacets);
-    cuda_sync_and_check()
+    cuda_sync_and_check();
+    return sum_of_elements(_area,_numFacets);
+
 }
 
 double DeviceMesh::volume(){
     unsigned int numberOfBlocks = ceil(_numFacets / (float) _blockSize);
 
-    volumeKernel<<<numberOfBlocks, _blockSize>>> (_area, _vert, _facets, _numFacets);
+    volumeKernel<<<numberOfBlocks, _blockSize>>> (_volume, _vert, _facets, _numFacets);
 
-    cuda_sync_and_check()
+    cuda_sync_and_check();
+    return sum_of_elements(_volume,_numFacets);
 
 }
 
@@ -310,7 +314,7 @@ double DeviceMesh::sum_of_elements(double* _vec,unsigned int size){
 
     // do the reduction each step sums _blockSize*2 number of elements
     unsigned int numberOfBlocks = ceil(size / (float) _blockSize / 2.0);
-     addTree<<<numberOfBlocks, BLOCKSIZE, BufferedSize / 2 * sizeof(double) >>> (_area, _area);
+    addTree<<<numberOfBlocks, BLOCKSIZE, BufferedSize / 2 * sizeof(double) >>> (_area, _area);
 
     for (int i = numberOfBlocks; i > 1; i /= (_blockSize * 2)) {
       addTree<<<ceil((float)numberOfBlocks/ (_blockSize * 2)), _blockSize, ceil((float)size / 2)* sizeof(double) >>> (_vec, _vec);

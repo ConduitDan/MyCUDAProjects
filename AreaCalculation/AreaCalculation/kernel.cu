@@ -348,7 +348,7 @@ cudaError_t areaWithCuda(float3* vertices, unsigned int  meshSize, unsigned int*
     // now sum the result
     addTree << <addNumBlock, BLOCKSIZE, BufferedSize / 2 * sizeof(float) >> > (dev_areaPerFace, dev_areaSum);
     for (int i = addNumBlock; i > 1; i /= (BLOCKSIZE * 2)) {
-        addTree << <ceil((float)addNumBlock/ (BLOCKSIZE * 2)), BLOCKSIZE, BufferedSize / 2 * sizeof(float) >> > (dev_areaSum, dev_areaSum);
+        addTree <<<ceil((float)addNumBlock/ (BLOCKSIZE * 2)), BLOCKSIZE, BufferedSize / 2 * sizeof(float) >>> (dev_areaSum, dev_areaSum);
     }
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
@@ -513,19 +513,3 @@ void vertex2facetMaker(std::vector < std::tuple<unsigned int, unsigned int>>** v
         }
     }
 }
-
-    © 2021 GitHub, Inc.
-    Terms
-    Privacy
-    Security
-    Status
-    Docs
-
-    Contact GitHub
-    Pricing
-    API
-    Training
-    Blog
-    About
-
-Loading complete
