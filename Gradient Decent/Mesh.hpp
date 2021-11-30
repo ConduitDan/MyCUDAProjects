@@ -8,8 +8,8 @@
 #include "cuda.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-#include <device_functions.h>
-#include "Kernals.h"
+#include "Kernals.hpp"
+#include "Gradient.hpp"
 
 // [x] Write DeviceMesh stuff that need to happen on the CPU 
 // [x] write everything around the kernals for device mesh
@@ -17,10 +17,12 @@
 // [x] write kernals
 // [x] write the __device__ util functions
 // [x] get the correct size allocation for area and volume vectors (for add tree)
-// [ ] write the print for the mesh
-// [ ] write the optimizer 
+// [x] write the print for the mesh
+// [x] write the optimizer 
 // [ ] let meshes constuct via pointer assignment (removes need for freind)
 // [ ] write tests
+class Gradient;
+
 
 class Mesh {
 private:
@@ -32,7 +34,7 @@ private:
 
     // helper function for file reading
     int getNumVertices(FILE* fp);
-    int Mesh::getNumFacets(FILE* fp);
+    int getNumFacets(FILE* fp);
 
 	friend class DeviceMesh; // so device meshes can create meshs via copy
 
@@ -54,6 +56,7 @@ public:
 	//void get_facets(unsigned int* facets){ return _facets = facets }
 
 	bool load_mesh_from_file(const char*);
+	bool print(const char*);
 };
 
 class DeviceMesh{
@@ -76,16 +79,17 @@ private:
 
     cudaError_t _cudaStatus;
 	unsigned int _blockSize;
+	unsigned int _bufferedSize;
 	
 	double sum_of_elements(double* ,unsigned int);
-	void cuda_sync_and_check();
+	void cuda_sync_and_check(const char *);
 
 public:
 	DeviceMesh(Mesh*,unsigned int); //copies a Mesh over to the device 
 	~DeviceMesh();
 
 	Mesh copy_to_host();
-	void decend_gradient(Gradient*,double);
+	void decend_gradient(Gradient *,double);
 
 	double volume();
 	double area();
@@ -99,37 +103,6 @@ public:
 	unsigned int* get_vertIndexStart(){ return _vertIndexStart; }
 
 
-};
-
-class Gradient{
-private:
-	DeviceMesh * _myMesh;
-
-	double *_gradAFacet = nullptr;
-	double *_gradAVert = nullptr;
-
-	double *_gradVFacet = nullptr;
-	double *_gradVVert = nullptr;
-
-	double *_force = nullptr;
-
-	cudaError_t _cudaStatus;
-
-
-	void calc_gradA();
-	void calc_gradV();
-	void facet_to_vertex(double*, double*);
-	void project_to_force();
-	void cuda_sync_and_check();
-
-
-
-public:
-	Gradient(DeviceMesh*);
-	~Gradient();
-	void calc_force();
-
-	double* get_force(){return _force;}
 };
 
 

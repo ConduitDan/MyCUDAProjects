@@ -3,35 +3,26 @@
 #define ShapeOptimizer_hpp
 
 #include "Mesh.hpp"
+#include "Gradient.hpp"
+
 class ShapeOptimizer
 {
 private:
-    Mesh* myMesh;
-    DeviceMesh* myDMesh;
-    Gradient* myGradient;
+    Mesh* _mesh;
+    DeviceMesh* _DMesh;
+    Gradient* _gradient;
     double tol = 1e-8;
+
+    double gradientDesentStep(); // takes a gradient step
 
 public:
     ShapeOptimizer(const char * fileName);
     ~ShapeOptimizer();
 
-    optimize()
+    double gradientDesent(int); // do n steps
+    int optimize();
+    void printMesh(const char*);
 };
-
-ShapeOptimizer::ShapeOptimizer(const char * fileName)
-{
-    myMesh = new Mesh(fileName);
-    myDMesh = new DeviceMesh(myMesh, 128);
-    myGradient = new Gradient(myDMesh);
-
-}
-
-ShapeOptimizer::~ShapeOptimizer()
-{
-    delete myMesh;
-    delete myDMesh;
-    delete myGradient;
-}
 
 
 

@@ -1,7 +1,8 @@
 // Kernals.cu
 // here is where all the device and global functions live
 
-#include Kernals.h
+#include "Kernals.hpp"
+
 __device__ void vectorSub(double * v1, double * v2, double * vOut){
     
     *vOut = *v1-*v2;
@@ -29,7 +30,7 @@ __device__ void cross(double *a,double *b, double *c) {
     (*(c+2)) = (*(a)) * (*(b+1)) - (*(b)) * (*(a+1));
 }
 
-__device__ double dot(double *a, double *b, double *c) {
+__device__ double dot(double *a, double *b) {
      return ((*a) * (*b) + (*(a+1)) * (*(b+1)) + (*(a+2)) * (*(b+2)));
 }
 
@@ -37,18 +38,26 @@ __device__ double norm(double *a) {
     return sqrt(dot(a, a));
 }
 
+__device__ int sign(double a){
+    if (a>0) return 1;
+    if (a<0) return -1;
+    else return 0;
+}
+
 
 __global__ void areaKernel(double * area, double * vert, unsigned int * facets, unsigned int numFacets){
     int i = blockDim.x * blockIdx.x + threadIdx.x;
     // do i*3 because we have 3 vertcies per facet
     // do facets[]*3 becasue we have x y and z positions
-    double* r10[3];
-    double* r21[3];
+    double r10[3];
+    double r21[3];
+    double S[3];
 
     if (i < numFacets) {
-        vectorSub(&vertices[facets[i+1]], &vertices[facets[i]],r10);
-        vectorSub(&vertices[facets[i+2]], &vertices[facets[i+1]],r21);    
-        area[i] = norm(cross(r10, r21))/2;
+        vectorSub(&vert[facets[i+1]], &vert[facets[i]],r10);
+        vectorSub(&vert[facets[i+2]], &vert[facets[i+1]],r21);    
+        cross(r10, r21,S);
+        area[i] = norm(S)/2;
     }
     else {
         area[i] = 0;
@@ -57,17 +66,17 @@ __global__ void areaKernel(double * area, double * vert, unsigned int * facets, 
 __global__ void volumeKernel(double * volume, double * vert, unsigned int * facets, unsigned int numFacets){
     int i = blockDim.x * blockIdx.x + threadIdx.x;
 
-    double *s01[3];
-    if (i < numFaces){
-        cross(&vertices[facets[i]], &vertices[facets[i+1]],s01);
-        volume[i] = abs(dot(s01,vertices[facets[i+2]]))/6;
+    double s01[3];
+    if (i < numFacets){
+        cross(&vert[facets[i]], &vert[facets[i+1]],s01);
+        volume[i] = abs(dot(s01,&vert[facets[i+2]]))/6;
     }
     else {
         volume[i] = 0;
     }
 
 }
-__global__ void addTree(const double* g_idata, double* g_odata){
+__global__ void addTree(double* g_idata, double* g_odata, unsigned int size){
     //https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf
 
     extern __shared__ double sdata[];
@@ -104,14 +113,14 @@ __global__ void addWithMultKernel(double *a ,double *b,double lambda, unsigned i
 __global__ void areaGradient(double* gradAFacet, unsigned int* facets,double* verts,unsigned int numFacets){
     int i = blockDim.x * blockIdx.x + threadIdx.x;
 
-    double *S0[3];
-    double *S1[3];
-    double *S01[3];
-    double *S010[3];
-    double *S011[3];
+    double S0[3];
+    double S1[3];
+    double S01[3];
+    double S010[3];
+    double S011[3];
     if (i<numFacets){
-        vectorSub(&vertices[facets[i+1]], &vertices[facets[i]],S0);
-        vectorSub(&vertices[facets[i+2]], &vertices[facets[i+1]],S1);
+        vectorSub(&verts[facets[i+1]], &verts[facets[i]],S0);
+        vectorSub(&verts[facets[i+2]], &verts[facets[i+1]],S1);
         cross(S0,S1,S01);
         cross(S01,S0,S010);
         cross(S01,S1,S011);
@@ -119,37 +128,38 @@ __global__ void areaGradient(double* gradAFacet, unsigned int* facets,double* ve
         
         // or facet i this is the gradent vector for its 0th vertex 
 
-        vecAssign(gradAFacet[i*9],S011,1.0/(2 * norm(S01)));
+        vecAssign(&gradAFacet[i*9],S011,1.0/(2 * norm(S01)));
 
         // reuse S0 
         vectorAdd(S011,S010,S0);
-        vecAssign(gradAFacet[i*9 + 3],S0,-1.0/(2 * norm(S01)));
+        vecAssign(&gradAFacet[i*9 + 3],S0,-1.0/(2 * norm(S01)));
 
-        vecAssign(gradAFacet[i*9 + 6],S010,1.0/(2 * norm(S01)));
+        vecAssign(&gradAFacet[i*9 + 6],S010,1.0/(2 * norm(S01)));
     }
 
 }
 __global__ void volumeGradient(double* gradVFacet, unsigned int* facets,double* verts,unsigned int numFacets){
     // TO DO: this can this can be broken up into 3 for even faster computaiton
     int i = blockDim.x * blockIdx.x + threadIdx.x;
-    double *c[3];
+    double c[3];
     double s = 1;
     if (i<numFacets){
-        cross(&vertices[facets[i]],&vertices[facets[i+1]],c);
-        s = copysign(dot(c),vertices[facets[i+2]],1);
+        cross(&verts[facets[i]],&verts[facets[i+1]],c);
+        s = sign(dot(c,&verts[facets[i+2]]));
 
-        cross(&vertices[facets[i+1]],&vertices[facets[i+2]],c);
-        vecAssign(gradVFacet[i*9],c,copysign(1/6,s);
+        cross(&verts[facets[i+1]],&verts[facets[i+2]],c);
+        vecAssign(&gradVFacet[i*9],c,s/6);
 
-        cross(&vertices[facets[i+2]],&vertices[facets[i]],c);
-        vecAssign(gradVFacet[i*9 + 3],c,copysign(1/6,s);
+        cross(&verts[facets[i+2]],&verts[facets[i]],c);
+        vecAssign(&gradVFacet[i*9 + 3],c,s/6);
 
-        cross(&vertices[facets[i]],&vertices[facets[i+1]],c);
-        vecAssign(gradVFacet[i*9 + 3],c,copysign(1/6,s);
+        cross(&verts[facets[i]],&verts[facets[i+1]],c);
+        vecAssign(&gradVFacet[i*9 + 3],c,s/6);
     }
 
 }
 __global__ void facetToVertex(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart,unsigned int numVert){
+    
     int i = blockDim.x * blockIdx.x + threadIdx.x;
 
     if (i<numVert){
@@ -157,19 +167,25 @@ __global__ void facetToVertex(double* vertexValue, double* facetValue,unsigned i
         vertexValue[i*3] = 0;
         vertexValue[i*3 + 1] = 0;
         vertexValue[i*3 + 2] = 0;
-        for (int index = vertIndexStart[i]; index < vertIndexStart[i+1]; index++){
-            vectorAdd(vertexValue[i*3],facetValue[3*vertToFacet[index]],vertexValue[i*3]);
-        }
+        //for (int index = vertIndexStart[i]; index < vertIndexStart[i+1]; index++){
+        //    vectorAdd(&vertexValue[i*3],&facetValue[3*vertToFacet[index]],&vertexValue[i*3]);
+        //}
     }
 }
 
 __global__ void projectForce(double* force,double* gradAVert,double* gradVVert,unsigned int numVert){
     int i = blockDim.x * blockIdx.x + threadIdx.x;
-    double *proj[3];
+    double proj[3];
+    double scaledGV[3];
     if (i<numVert){
         // project the vector gA - (gA . gV)/(gV . gV) gV
-        vectorSub(gradAVert[i*3],vecScale(gradVVert[i*3], dot(gradAVert[i*3],gradVVert[i*3])/dot(gradVVert[i*3],gradVVert[i*3])),proj)
+        // first create the (gA . gV)/(gV . gV) gV vector 
+        vecAssign(scaledGV,&gradVVert[i*3], dot(&gradAVert[i*3],&gradVVert[i*3])/dot(&gradVVert[i*3],&gradVVert[i*3]));
+
+        // subtract
+        vectorSub(&gradAVert[i*3],scaledGV,proj);
+        
         // and assgin
-        vectorAssign(force[i*3],proj,-1);
+        vecAssign(&force[i*3],proj,-1);
     }
 }
