@@ -19,6 +19,9 @@
 // [x] get the correct size allocation for area and volume vectors (for add tree)
 // [x] write the print for the mesh
 // [x] write the optimizer 
+// [ ] write vector dot
+// [ ] write vector scale and subtract
+// [ ] GLOBAL constraints
 // [ ] let meshes constuct via pointer assignment (removes need for freind)
 // [ ] write tests
 class Gradient;
