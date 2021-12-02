@@ -93,6 +93,8 @@ public:
 
 	double volume();
 	double area();
+	double* check_area_on_facet();
+	
 
 	unsigned int get_numVert(){ return _numVert; }
 	unsigned int get_numFacets(){ return _numFacets; }
@@ -101,6 +103,7 @@ public:
 	unsigned int* get_facets(){ return _facets; }
 	unsigned int* get_vertToFacet(){ return _vertToFacet; }
 	unsigned int* get_vertIndexStart(){ return _vertIndexStart; }
+	
 
 
 };

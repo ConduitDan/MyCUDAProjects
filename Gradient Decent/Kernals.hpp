@@ -3,6 +3,7 @@
 #define Kernals_hpp
 #include "cuda.h"
 #include "cuda_runtime.h"
+#include <stdio.h> 
 
 __global__ void areaKernel(double * area, double * vert, unsigned int * facets, unsigned int numFacets);
 __global__ void volumeKernel(double * volume, double * vert, unsigned int * facets, unsigned int numFacets);

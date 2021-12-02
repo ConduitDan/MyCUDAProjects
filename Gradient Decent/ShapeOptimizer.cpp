@@ -22,8 +22,10 @@ double ShapeOptimizer::gradientDesentStep(){
 
 
 double ShapeOptimizer::gradientDesent(int n){ // do n gradient desent steps
+    fprintf(stdout,"At Start: volume = %f \t area = %f \n",_DMesh->volume(),_DMesh->area());
     for (int i = 0; i<n; i++){
         gradientDesentStep();
+        fprintf(stdout,"Step %d: volume = %f \t area = %f \n",i+1,_DMesh->volume(),_DMesh->area());
     }
     return _DMesh->volume();
 }

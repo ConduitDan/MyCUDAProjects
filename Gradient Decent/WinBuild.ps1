@@ -1,0 +1,1 @@
+nvcc -o opt.exe main.cpp ShapeOptimizer.cpp Gradient.cu Kernals.cu Mesh.cu

@@ -10,6 +10,7 @@ Mesh::Mesh(){
 Mesh::Mesh(const char* fileName){
     if(load_mesh_from_file(fileName)){
         fprintf(stdout,"Successfully read %s \n",fileName);
+        fprintf(stdout,"Found %d vertices and %d faces\n",_numVert,_numFacets);
     }
     else {
         fprintf(stdout,"Failed to read %s \n",fileName);
@@ -149,13 +150,13 @@ bool Mesh::print(const char* fileName){
     // print vertices
     fprintf(fp,"vertices\n\n");
     for (int i = 0; i<_numVert; i++){
-        fprintf(fp,"%d %f %f %f\n",i-1,_vert[i*3],_vert[i*3+1],_vert[i*3+2]);
+        fprintf(fp,"%d %f %f %f\n",i+1,_vert[i*3],_vert[i*3+1],_vert[i*3+2]);
     }
 
     // print facets
     fprintf(fp,"\nfaces\n\n");
     for (int i = 0; i<_numFacets; i++){
-        fprintf(fp,"%d %d %d %d\n",i+1,_facets[i*3],_facets[i*3+1],_facets[i*3+2]);
+        fprintf(fp,"%d %d %d %d\n",i+1,_facets[i*3]+1,_facets[i*3+1]+1,_facets[i*3+2]+1);
     }
     return 1;
 }
@@ -296,7 +297,7 @@ Mesh DeviceMesh::copy_to_host(){
     newMesh._numVert = _numVert;
     newMesh._numFacets = _numFacets;
     newMesh._vert = new double[_numVert * 3]; // [x0; y0; z0; x1; y1;.... ]
-    newMesh._facets =  new unsigned int[_numFacets * 3];;// [a0; b0; c0; a1;b1;c1;...]
+    newMesh._facets =  new unsigned int[_numFacets * 3];// [a0; b0; c0; a1;b1;c1;...]
 
     _cudaStatus = cudaMemcpy(newMesh._vert, _vert, _numVert * 3 *  sizeof(double), cudaMemcpyDeviceToHost);
     if (_cudaStatus != cudaSuccess) {
@@ -338,10 +339,11 @@ double DeviceMesh::sum_of_elements(double* vec,unsigned int size){
     // do the reduction each step sums _blockSize*2 number of elements
     unsigned int numberOfBlocks = ceil(size / (float) _blockSize / 2.0);
     addTree<<<numberOfBlocks, _blockSize, _bufferedSize / 2 * sizeof(double) >>> (vec, vec,_bufferedSize);
-
-    for (int i = numberOfBlocks; i > 1; i /= (_blockSize * 2)) {
-      addTree<<<ceil((float)numberOfBlocks/ (_blockSize * 2)), _blockSize, ceil((float)size / 2)* sizeof(double) >>> (vec, vec,_bufferedSize);
-    } 
+    if (numberOfBlocks>1){
+        for (int i = numberOfBlocks; i > 1; i /= (_blockSize * 2)) {
+        addTree<<<ceil((float)numberOfBlocks/ (_blockSize * 2)), _blockSize, ceil((float)size / 2)* sizeof(double) >>> (vec, vec,_bufferedSize);
+        } 
+    }
     cuda_sync_and_check("sum of elements");
 
     // copy the 0th element out of the vector now that it contains the sum
@@ -355,6 +357,21 @@ double DeviceMesh::sum_of_elements(double* vec,unsigned int size){
     return out;
 
 }
+double* DeviceMesh::check_area_on_facet(){
+    unsigned int numberOfBlocks = ceil(_numFacets / (float) _blockSize);
+    areaKernel<<<numberOfBlocks, _blockSize>>> (_area, _vert, _facets, _numFacets);
+    cuda_sync_and_check("area");
+
+    double *areaPerFacet =  new double[_numFacets];
+
+    _cudaStatus = cudaMemcpy(areaPerFacet, _area, _numFacets  *  sizeof(double), cudaMemcpyDeviceToHost);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMemcpy failed!\n");
+    }
+    return areaPerFacet;
+
+}
+
 
 void DeviceMesh::cuda_sync_and_check(const char * caller){
     _cudaStatus = cudaGetLastError();

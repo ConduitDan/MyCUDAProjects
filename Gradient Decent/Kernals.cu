@@ -2,7 +2,6 @@
 // here is where all the device and global functions live
 
 #include "Kernals.hpp"
-
 __device__ void vectorSub(double * v1, double * v2, double * vOut){
     
     *vOut = *v1-*v2;
@@ -25,7 +24,7 @@ __device__ void vecAssign(double *out, double *in,double lambda){ // out  = in*l
     *(out + 2) = *(in + 2) * lambda;
 }
 __device__ void cross(double *a,double *b, double *c) {
-    (*c)     = (*(a+2)) * (*(b+2)) - (*(a+2)) * (*(b+1));
+    (*c)     = (*(a+1)) * (*(b+2)) - (*(a+2)) * (*(b+1));
     (*(c+1)) = (*(b)) * (*(a+2)) - (*(a)) * (*(b+2));
     (*(c+2)) = (*(a)) * (*(b+1)) - (*(b)) * (*(a+1));
 }
@@ -54,8 +53,8 @@ __global__ void areaKernel(double * area, double * vert, unsigned int * facets, 
     double S[3];
 
     if (i < numFacets) {
-        vectorSub(&vert[facets[i+1]], &vert[facets[i]],r10);
-        vectorSub(&vert[facets[i+2]], &vert[facets[i+1]],r21);    
+        vectorSub(&vert[facets[i*3+1]*3], &vert[facets[i*3]*3],r10);
+        vectorSub(&vert[facets[i*3+2]*3], &vert[facets[i*3+1]*3],r21);    
         cross(r10, r21,S);
         area[i] = norm(S)/2;
     }
@@ -68,8 +67,8 @@ __global__ void volumeKernel(double * volume, double * vert, unsigned int * face
 
     double s01[3];
     if (i < numFacets){
-        cross(&vert[facets[i]], &vert[facets[i+1]],s01);
-        volume[i] = abs(dot(s01,&vert[facets[i+2]]))/6;
+        cross(&vert[facets[i*3]*3], &vert[facets[i*3+1]*3],s01);
+        volume[i] = abs(dot(s01,&vert[facets[i*3+2]*3]))/6;
     }
     else {
         volume[i] = 0;
@@ -106,7 +105,7 @@ __global__ void addWithMultKernel(double *a ,double *b,double lambda, unsigned i
     // a += b * lambda
     int i = blockDim.x * blockIdx.x + threadIdx.x;
     if (i<size){
-        *(a) += *b * lambda;
+        *(a+i) += *(b+i) * lambda;
     }
 }
 
@@ -119,8 +118,8 @@ __global__ void areaGradient(double* gradAFacet, unsigned int* facets,double* ve
     double S010[3];
     double S011[3];
     if (i<numFacets){
-        vectorSub(&verts[facets[i+1]], &verts[facets[i]],S0);
-        vectorSub(&verts[facets[i+2]], &verts[facets[i+1]],S1);
+        vectorSub(&verts[facets[i*3+1]*3], &verts[facets[i*3]*3],S0);
+        vectorSub(&verts[facets[i*3+2]*3], &verts[facets[i*3+1]*3],S1);
         cross(S0,S1,S01);
         cross(S01,S0,S010);
         cross(S01,S1,S011);
@@ -144,17 +143,17 @@ __global__ void volumeGradient(double* gradVFacet, unsigned int* facets,double* 
     double c[3];
     double s = 1;
     if (i<numFacets){
-        cross(&verts[facets[i]],&verts[facets[i+1]],c);
-        s = sign(dot(c,&verts[facets[i+2]]));
+        cross(&verts[facets[i*3]*3],&verts[facets[i*3+1]*3],c);
+        s = sign(dot(c,&verts[facets[i*3+2]*3]));
 
-        cross(&verts[facets[i+1]],&verts[facets[i+2]],c);
+        cross(&verts[facets[i*3+1]*3],&verts[facets[i*3+2]*3],c);
         vecAssign(&gradVFacet[i*9],c,s/6);
 
-        cross(&verts[facets[i+2]],&verts[facets[i]],c);
+        cross(&verts[facets[i*3+2]*3],&verts[facets[i*3]*3],c);
         vecAssign(&gradVFacet[i*9 + 3],c,s/6);
 
-        cross(&verts[facets[i]],&verts[facets[i+1]],c);
-        vecAssign(&gradVFacet[i*9 + 3],c,s/6);
+        cross(&verts[facets[i*3]*3],&verts[facets[i*3+1]*3],c);
+        vecAssign(&gradVFacet[i*9 + 6],c,s/6);
     }
 
 }
@@ -167,9 +166,9 @@ __global__ void facetToVertex(double* vertexValue, double* facetValue,unsigned i
         vertexValue[i*3] = 0;
         vertexValue[i*3 + 1] = 0;
         vertexValue[i*3 + 2] = 0;
-        //for (int index = vertIndexStart[i]; index < vertIndexStart[i+1]; index++){
-        //    vectorAdd(&vertexValue[i*3],&facetValue[3*vertToFacet[index]],&vertexValue[i*3]);
-        //}
+        for (int index = vertIndexStart[i]; index < vertIndexStart[i+1]; index++){
+            vectorAdd(&vertexValue[i*3],&facetValue[3*vertToFacet[index]],&vertexValue[i*3]);
+        }
     }
 }
 
@@ -180,12 +179,24 @@ __global__ void projectForce(double* force,double* gradAVert,double* gradVVert,u
     if (i<numVert){
         // project the vector gA - (gA . gV)/(gV . gV) gV
         // first create the (gA . gV)/(gV . gV) gV vector 
-        vecAssign(scaledGV,&gradVVert[i*3], dot(&gradAVert[i*3],&gradVVert[i*3])/dot(&gradVVert[i*3],&gradVVert[i*3]));
+        double denom =dot(&gradVVert[i*3],&gradVVert[i*3]);
+        if (abs(denom)>0){
+            vecAssign(scaledGV,&gradVVert[i*3], dot(&gradAVert[i*3],&gradVVert[i*3])/denom);
+        }
+        else {
+            vecAssign(scaledGV,&gradVVert[i*3], 0);
 
+        }
         // subtract
         vectorSub(&gradAVert[i*3],scaledGV,proj);
         
         // and assgin
         vecAssign(&force[i*3],proj,-1);
+        /*
+        printf("thread %d \t gradA = [%f,%f,%f]\n",i,gradAVert[i*3],gradAVert[i*3+1],gradAVert[i*3+2]);
+        printf("thread %d \t gradV = [%f,%f,%f]\n",i,gradVVert[i*3],gradVVert[i*3+1],gradVVert[i*3+2]);
+        printf("thread %d \t scaled GV = [%f,%f,%f]\n",i,scaledGV[0],scaledGV[1],scaledGV[2]);
+        printf("thread %d \t f = [%f,%f,%f]\n",i,force[i*3],force[i*3+1],force[i*3+2]);
+        */
     }
 }
