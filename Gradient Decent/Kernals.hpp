@@ -7,7 +7,7 @@
 
 __global__ void areaKernel(double * area, double * vert, unsigned int * facets, unsigned int numFacets);
 __global__ void volumeKernel(double * volume, double * vert, unsigned int * facets, unsigned int numFacets);
-__global__ void addTree(double * in, double * out,unsigned int size);
+__global__ void addTree(double * in, double * out);
 __global__ void addWithMultKernel(double *a ,double *b,double lambda, unsigned int size); // a += b * lambda
 __global__ void areaGradient(double* gradAFacet, unsigned int* facets,double* verts,unsigned int numFacets);
 __global__ void volumeGradient(double* gradVFacet, unsigned int* facets,double* verts,unsigned int numFacets);
@@ -23,6 +23,9 @@ __device__ void cross(double *a,double *b, double *c);
 __device__ double dot(double *a, double *b, double *c);
 __device__ double norm(double *a); 
 __device__ int sign(double a);
+
+template <unsigned int blockSize> __device__ void warpReduce(volatile double *sdata, unsigned int tid);
+template <unsigned int blockSize> __global__ void reduce6(double *g_idata,double *g_odata, unsigned int n);
 
 
 #endif

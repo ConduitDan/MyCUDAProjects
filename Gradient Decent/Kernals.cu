@@ -57,6 +57,7 @@ __global__ void areaKernel(double * area, double * vert, unsigned int * facets, 
         vectorSub(&vert[facets[i*3+2]*3], &vert[facets[i*3+1]*3],r21);    
         cross(r10, r21,S);
         area[i] = norm(S)/2;
+        //printf("Thread %d:\tArea %f\n",i,area[i]);
     }
     else {
         area[i] = 0;
@@ -75,29 +76,57 @@ __global__ void volumeKernel(double * volume, double * vert, unsigned int * face
     }
 
 }
-__global__ void addTree(double* g_idata, double* g_odata, unsigned int size){
+__global__ void addTree(double* g_idata, double* g_odata){
     //https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf
 
     extern __shared__ double sdata[];
     // each thread loads one element from global to shared mem
     unsigned int tid = threadIdx.x; // get the id of this thread
     unsigned int i = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
-    //if (i + blockDim.x < size) {
-    //printf("tid: %d\ti:%d\ti + blockDim.x:%d\tg_idata[i]:%f\tg_idata[i + blockDim.x]%f\n",tid,i, i + blockDim.x, g_idata[i] , g_idata[i + blockDim.x]);
-    sdata[tid] = g_idata[i] + g_idata[i + blockDim.x];// g_idata[i]; // move the data over
-    //printf("tid: %d\ti:%d\ti + blockDim.x:%d\tg_idata[i]:%f\tg_idata[i + blockDim.x]%f\t sdata[tid]: %f\n", tid, i, i + blockDim.x, g_idata[i], g_idata[i + blockDim.x], sdata[tid]);
-                                                      //}
-   __syncthreads();
-        // do reduction in shared mem
-    for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
-        if (tid < s) {
-            sdata[tid] += sdata[tid + s];
+    
+        //printf("tid: %d\ti:%d\ti + blockDim.x:%d\tg_idata[i]:%f\tg_idata[i + blockDim.x]%f\n",tid,i, i + blockDim.x, g_idata[i] , g_idata[i + blockDim.x]);
+        sdata[tid] = g_idata[i] + g_idata[i + blockDim.x];// g_idata[i]; // move the data over
+        g_idata[i] = 0;
+        g_idata[i + blockDim.x] = 0;
+        // printf("tid: %d\ti:%d\ti + blockDim.x:%d\tg_idata[i]:%f\tg_idata[i + blockDim.x]%f\t sdata[tid]: %f\n", tid, i, i + blockDim.x, g_idata[i], g_idata[i + blockDim.x], sdata[tid]);
+                                                        //}
+    __syncthreads();
+            // do reduction in shared mem
+        for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
+            if (tid < s) {
+                sdata[tid] += sdata[tid + s];
+            }
+        __syncthreads();
         }
-       __syncthreads();
+        __syncthreads();
+        
+        //     write result for this block to global mem
+        if (tid == 0) g_odata[blockIdx.x] = sdata[0];
+}
+
+template <unsigned int blockSize> __device__ void warpReduce(volatile double *sdata, unsigned int tid) {
+        if (blockSize >=  64) sdata[tid] += sdata[tid + 32];
+        if (blockSize >=  32) sdata[tid] += sdata[tid + 16];
+        if (blockSize >=  16) sdata[tid] += sdata[tid +  8];
+        if (blockSize >=    8) sdata[tid] += sdata[tid +  4];
+        if (blockSize >=    4) sdata[tid] += sdata[tid +  2];
+        if (blockSize >=    2) sdata[tid] += sdata[tid +  1];
+}
+template <unsigned int blockSize> __global__ void reduce6(double *g_idata,double *g_odata, unsigned int n) {
+    extern __shared__ double sdata[];
+    unsigned int tid = threadIdx.x;
+    unsigned int i = blockIdx.x*(blockSize*2) + tid;
+    unsigned int gridSize = blockSize*2*gridDim.x;
+    sdata[tid] = 0;
+    while (i < n) {
+        sdata[tid] += g_idata[i] + g_idata[i+blockSize];
+        i += gridSize;
     }
     __syncthreads();
-    
-    //     write result for this block to global mem
+    if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; } __syncthreads(); }
+    if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; } __syncthreads(); }
+    if (blockSize >= 128) { if (tid <   64) { sdata[tid] += sdata[tid +   64]; } __syncthreads(); }
+    if (tid < 32) warpReduce(sdata, tid);
     if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 }
 

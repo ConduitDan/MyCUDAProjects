@@ -336,12 +336,30 @@ double DeviceMesh::sum_of_elements(double* vec,unsigned int size){
 
     double out;
 
+
+
     // do the reduction each step sums _blockSize*2 number of elements
     unsigned int numberOfBlocks = ceil(size / (float) _blockSize / 2.0);
-    addTree<<<numberOfBlocks, _blockSize, _bufferedSize / 2 * sizeof(double) >>> (vec, vec,_bufferedSize);
+    // printf("AddTree with %d blocks,  of blocks size %d, for %d total elements\n",numberOfBlocks,_blockSize,_bufferedSize);
+    
+    addTree<<<numberOfBlocks, _blockSize, _bufferedSize / 2 * sizeof(double) >>> (vec, vec);
+
+    
+    // reduce6<128><<< numberOfBlocks, _blockSize, _bufferedSize / 2 * sizeof(double)>>>(vec, vec,_bufferedSize);
+
+        
+    // double *check = new double[_bufferedSize];
+    // _cudaStatus = cudaMemcpy(check, vec,sizeof(double)*_bufferedSize, cudaMemcpyDeviceToHost);
+    // if (_cudaStatus != cudaSuccess) {
+    //     fprintf(stderr, "cudaMemcpy failed! area\n");
+    // throw;
+    // }
+    // for (int i = 0; i<_bufferedSize; i++){
+    //     printf("i = %d \t val = %f\n",i,check[i]);
+    // }
     if (numberOfBlocks>1){
         for (int i = numberOfBlocks; i > 1; i /= (_blockSize * 2)) {
-        addTree<<<ceil((float)numberOfBlocks/ (_blockSize * 2)), _blockSize, ceil((float)size / 2)* sizeof(double) >>> (vec, vec,_bufferedSize);
+            addTree<<<ceil((float)numberOfBlocks/ (_blockSize * 2)), _blockSize, ceil((float)size / 2)* sizeof(double) >>> (vec, vec);
         } 
     }
     cuda_sync_and_check("sum of elements");
@@ -352,6 +370,8 @@ double DeviceMesh::sum_of_elements(double* vec,unsigned int size){
         fprintf(stderr, "cudaMemcpy failed! area\n");
     throw;
     }
+
+
 
 
     return out;
