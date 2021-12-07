@@ -17,6 +17,14 @@ Mesh::Mesh(const char* fileName){
     }
 }
 
+Mesh::Mesh(unsigned int numVertIn,unsigned int numFacetsIn,double * vertIn,unsigned int* facetsIn){
+    _numVert = numVertIn;
+	_numFacets = numFacetsIn;
+	_vert = vertIn;
+	_facets = facetsIn;
+}
+
+
 Mesh::~Mesh(){
 
     if (_vert) delete _vert;
@@ -293,32 +301,31 @@ DeviceMesh::~DeviceMesh(){
 }
 
 Mesh DeviceMesh::copy_to_host(){
-    Mesh newMesh;
-    newMesh._numVert = _numVert;
-    newMesh._numFacets = _numFacets;
-    newMesh._vert = new double[_numVert * 3]; // [x0; y0; z0; x1; y1;.... ]
-    newMesh._facets =  new unsigned int[_numFacets * 3];// [a0; b0; c0; a1;b1;c1;...]
+    //Mesh newMesh;
+    double* newVert = new double[_numVert * 3]; // [x0; y0; z0; x1; y1;.... ]
+    unsigned int* newFacets =  new unsigned int[_numFacets * 3];// [a0; b0; c0; a1;b1;c1;...]
 
-    _cudaStatus = cudaMemcpy(newMesh._vert, _vert, _numVert * 3 *  sizeof(double), cudaMemcpyDeviceToHost);
+    _cudaStatus = cudaMemcpy(newVert, _vert, _numVert * 3 *  sizeof(double), cudaMemcpyDeviceToHost);
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed!\n");
     }
 
-    _cudaStatus = cudaMemcpy(newMesh._facets, _facets, _numFacets * 3 *  sizeof(unsigned int), cudaMemcpyDeviceToHost);
+    _cudaStatus = cudaMemcpy(newFacets, _facets, _numFacets * 3 *  sizeof(unsigned int), cudaMemcpyDeviceToHost);
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed!\n");
     }
+    return Mesh( _numVert, _numFacets,newVert,newFacets);
 
 
-    return newMesh;
+
 }
 
 double DeviceMesh::area(){
 
     unsigned int numberOfBlocks = ceil(_numFacets / (float) _blockSize);
     areaKernel<<<numberOfBlocks, _blockSize>>> (_area, _vert, _facets, _numFacets);
-    cuda_sync_and_check("area");
-    return sum_of_elements(_area,_numFacets);
+    cuda_sync_and_check(_cudaStatus,"area");
+    return sum_of_elements(_cudaStatus,_area,_numFacets,_bufferedSize,_blockSize);
 
 }
 
@@ -327,60 +334,16 @@ double DeviceMesh::volume(){
 
     volumeKernel<<<numberOfBlocks, _blockSize>>> (_volume, _vert, _facets, _numFacets);
 
-    cuda_sync_and_check("volume");
-    return sum_of_elements(_volume,_numFacets);
+    cuda_sync_and_check(_cudaStatus,"volume");
+    return sum_of_elements(_cudaStatus,_volume,_numFacets,_bufferedSize,_blockSize);
 
 }
 
-double DeviceMesh::sum_of_elements(double* vec,unsigned int size){
 
-    double out;
-
-
-
-    // do the reduction each step sums _blockSize*2 number of elements
-    unsigned int numberOfBlocks = ceil(size / (float) _blockSize / 2.0);
-    // printf("AddTree with %d blocks,  of blocks size %d, for %d total elements\n",numberOfBlocks,_blockSize,_bufferedSize);
-    
-    addTree<<<numberOfBlocks, _blockSize, _bufferedSize / 2 * sizeof(double) >>> (vec, vec);
-
-    
-    // reduce6<128><<< numberOfBlocks, _blockSize, _bufferedSize / 2 * sizeof(double)>>>(vec, vec,_bufferedSize);
-
-        
-    // double *check = new double[_bufferedSize];
-    // _cudaStatus = cudaMemcpy(check, vec,sizeof(double)*_bufferedSize, cudaMemcpyDeviceToHost);
-    // if (_cudaStatus != cudaSuccess) {
-    //     fprintf(stderr, "cudaMemcpy failed! area\n");
-    // throw;
-    // }
-    // for (int i = 0; i<_bufferedSize; i++){
-    //     printf("i = %d \t val = %f\n",i,check[i]);
-    // }
-    if (numberOfBlocks>1){
-        for (int i = numberOfBlocks; i > 1; i /= (_blockSize * 2)) {
-            addTree<<<ceil((float)numberOfBlocks/ (_blockSize * 2)), _blockSize, ceil((float)size / 2)* sizeof(double) >>> (vec, vec);
-        } 
-    }
-    cuda_sync_and_check("sum of elements");
-
-    // copy the 0th element out of the vector now that it contains the sum
-    _cudaStatus = cudaMemcpy(&out, vec,sizeof(double), cudaMemcpyDeviceToHost);
-    if (_cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMemcpy failed! area\n");
-    throw;
-    }
-
-
-
-
-    return out;
-
-}
 double* DeviceMesh::check_area_on_facet(){
     unsigned int numberOfBlocks = ceil(_numFacets / (float) _blockSize);
     areaKernel<<<numberOfBlocks, _blockSize>>> (_area, _vert, _facets, _numFacets);
-    cuda_sync_and_check("area");
+    cuda_sync_and_check(_cudaStatus,"area");
 
     double *areaPerFacet =  new double[_numFacets];
 
@@ -393,20 +356,7 @@ double* DeviceMesh::check_area_on_facet(){
 }
 
 
-void DeviceMesh::cuda_sync_and_check(const char * caller){
-    _cudaStatus = cudaGetLastError();
-    if (_cudaStatus != cudaSuccess) {
-        fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(_cudaStatus));
-        throw;
-    }
-    // check that the kernal didn't throw an error
-    _cudaStatus = cudaDeviceSynchronize();
-    if (_cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error %s after launching Kernel %s!\n", cudaGetErrorString(_cudaStatus),caller);
-        throw;
-    }
 
-}
 
 void DeviceMesh::decend_gradient(Gradient *myGrad,double lambda){
 
@@ -414,7 +364,7 @@ void DeviceMesh::decend_gradient(Gradient *myGrad,double lambda){
 
     // call vector add kerenal with force pointer and vertex pointer
     addWithMultKernel<<<numberOfBlocks,_blockSize>>>(_vert ,myGrad->get_force(),lambda,_numVert);
-    cuda_sync_and_check("add with scale");
+    cuda_sync_and_check(_cudaStatus,"add with scale");
 
 }
 

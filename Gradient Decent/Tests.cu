@@ -4,13 +4,17 @@
 
 #include "Mesh.hpp"
 #include <iostream>
+#define BOOST_TEST_MAIN
+#include "boost/test/unit_test.hpp"
+namespace bt = boost::unit_test;
 
-int main(){
+
 
     //#####################
     // mesh tests
     //#####################
 
+BOOST_AUTO_TEST_CASE(area){
     //area test
     
     Mesh square = Mesh("square.mesh");
@@ -27,17 +31,21 @@ int main(){
     for (int i = 0; i< dSquare.get_numFacets(); i++){
        std::cout<<"Facet "<<i+1<<" has area: "<<areaPerFacet[i]<<std::endl;
     }
-
+}
+/*
     //###########################
     // kernal tests
     //###########################
 
-
-
     //add tree
     unsigned int blockSize = 4;
     unsigned int size = 8;
-    double array[8] = {1,2,3,4,5,6,7,8};
+    double* array = new double[size];
+    for (int i = 0; i <size; i++){
+        array[i] = i;
+    }
+
+
 
     double *dArray = nullptr;
     
@@ -56,42 +64,52 @@ int main(){
     }
 
     //add
-    unsigned int numberOfBlocks = ceil(size / (float) blockSize / 2.0);
-    addTree<<<numberOfBlocks,blockSize, _bufferedSize / 2 * sizeof(double) >>> (dArray, dArray,_bufferedSize);
-    if (numberOfBlocks>1){
-        for (int i = numberOfBlocks; i > 1; i /= (blockSize * 2)) {
-        addTree<<<ceil((float)numberOfBlocks/ (blockSize * 2)), blockSize, ceil((float)size / 2)* sizeof(double) >>> (dArray, dArray,_bufferedSize);
-        } 
-    }
-    _cudaStatus = cudaGetLastError();
-    if (_cudaStatus != cudaSuccess) {
-        fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(_cudaStatus));
-        throw;
-    }
-    // check that the kernal didn't throw an error
-    _cudaStatus = cudaDeviceSynchronize();
-    if (_cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error %s after launching Kernel!\n", cudaGetErrorString(_cudaStatus));
-        throw;
-    }
-    double out = 0;
+    
+    double out = sum_of_elements(_cudaStatus, dArray, size, _bufferedSize, blockSize);
     // copy the 0th element out of the vector now that it contains the sum
-    _cudaStatus = cudaMemcpy(&out, dArray,sizeof(double), cudaMemcpyDeviceToHost);
-    if (_cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMemcpy failed! area\n");
-    throw;
-    }
-
     cudaFree(dArray);
 
 
-    int expected = size*(size+1)/2;;
+    int expected = size*(size-1)/2;
     std::cout<<"Testing addtree \n";
     std::cout<<"Expected value: "<<expected<<"\t Acutal value: "<<out<<std::endl;
     if (out == expected) std::cout<<"Passed\n";
     else std::cout<<"Failed\n";
 
 
+    size = 10;
+    _bufferedSize = ceil(size / (float)( blockSize * 2)) * 2 * blockSize; // for 
+
+    // Dot product
+    double* array1 = new double[size];
+    double* array2 = new double[size];
+    for (int i = 0; i <size; i++){
+        array1[i] = i;
+        array2[i] = 2;
+    }
+    double *dArray1 = nullptr;
+    double *dArray2 = nullptr;
+    double *dscratch = nullptr;
+
+    _cudaStatus = cudaMalloc((void**)&dArray1, size * sizeof(double));
+    _cudaStatus = cudaMalloc((void**)&dArray2, size * sizeof(double));
+    _cudaStatus = cudaMalloc((void**)&dscratch, _bufferedSize * sizeof(double));
+    
+    _cudaStatus = cudaMemcpy(dArray1,array1, size * sizeof(double), cudaMemcpyHostToDevice);
+    _cudaStatus = cudaMemcpy(dArray2,array2, size * sizeof(double), cudaMemcpyHostToDevice);
+
+    double ans = dotProduct(_cudaStatus,dArray1,dArray2,dscratch,size,blockSize);
+    expected = size*(size-1);
+    std::cout<<"Testing dot product \n";
+    std::cout<<"Expected value: "<<expected<<"\t Acutal value: "<<ans<<std::endl;
+    if (expected == ans) std::cout<<"Passed\n";
+    else std::cout<<"Failed\n";
+
+    cudaFree(dArray1);
+    cudaFree(dArray2);
+    cudaFree(dscratch);
 
 
-}
+
+
+}*/

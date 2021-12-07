@@ -104,31 +104,31 @@ __global__ void addTree(double* g_idata, double* g_odata){
         if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 }
 
-template <unsigned int blockSize> __device__ void warpReduce(volatile double *sdata, unsigned int tid) {
-        if (blockSize >=  64) sdata[tid] += sdata[tid + 32];
-        if (blockSize >=  32) sdata[tid] += sdata[tid + 16];
-        if (blockSize >=  16) sdata[tid] += sdata[tid +  8];
-        if (blockSize >=    8) sdata[tid] += sdata[tid +  4];
-        if (blockSize >=    4) sdata[tid] += sdata[tid +  2];
-        if (blockSize >=    2) sdata[tid] += sdata[tid +  1];
-}
-template <unsigned int blockSize> __global__ void reduce6(double *g_idata,double *g_odata, unsigned int n) {
-    extern __shared__ double sdata[];
-    unsigned int tid = threadIdx.x;
-    unsigned int i = blockIdx.x*(blockSize*2) + tid;
-    unsigned int gridSize = blockSize*2*gridDim.x;
-    sdata[tid] = 0;
-    while (i < n) {
-        sdata[tid] += g_idata[i] + g_idata[i+blockSize];
-        i += gridSize;
-    }
-    __syncthreads();
-    if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; } __syncthreads(); }
-    if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; } __syncthreads(); }
-    if (blockSize >= 128) { if (tid <   64) { sdata[tid] += sdata[tid +   64]; } __syncthreads(); }
-    if (tid < 32) warpReduce(sdata, tid);
-    if (tid == 0) g_odata[blockIdx.x] = sdata[0];
-}
+// template <unsigned int blockSize> __device__ void warpReduce(volatile double *sdata, unsigned int tid) {
+//         if (blockSize >=  64) sdata[tid] += sdata[tid + 32];
+//         if (blockSize >=  32) sdata[tid] += sdata[tid + 16];
+//         if (blockSize >=  16) sdata[tid] += sdata[tid +  8];
+//         if (blockSize >=    8) sdata[tid] += sdata[tid +  4];
+//         if (blockSize >=    4) sdata[tid] += sdata[tid +  2];
+//         if (blockSize >=    2) sdata[tid] += sdata[tid +  1];
+// }
+// template <unsigned int blockSize> __global__ void reduce6(double *g_idata,double *g_odata, unsigned int n) {
+//     extern __shared__ double sdata[];
+//     unsigned int tid = threadIdx.x;
+//     unsigned int i = blockIdx.x*(blockSize*2) + tid;
+//     unsigned int gridSize = blockSize*2*gridDim.x;
+//     sdata[tid] = 0;
+//     while (i < n) {
+//         sdata[tid] += g_idata[i] + g_idata[i+blockSize];
+//         i += gridSize;
+//     }
+//     __syncthreads();
+//     if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; } __syncthreads(); }
+//     if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; } __syncthreads(); }
+//     if (blockSize >= 128) { if (tid <   64) { sdata[tid] += sdata[tid +   64]; } __syncthreads(); }
+//     if (tid < 32) warpReduce(sdata, tid);
+//     if (tid == 0) g_odata[blockIdx.x] = sdata[0];
+// }
 
 __global__ void addWithMultKernel(double *a ,double *b,double lambda, unsigned int size){
     // a += b * lambda
@@ -201,31 +201,76 @@ __global__ void facetToVertex(double* vertexValue, double* facetValue,unsigned i
     }
 }
 
-__global__ void projectForce(double* force,double* gradAVert,double* gradVVert,unsigned int numVert){
+__global__ void projectForce(double* force,double* gradAVert,double* gradVVert,double scale,unsigned int numEle){
     int i = blockDim.x * blockIdx.x + threadIdx.x;
-    double proj[3];
-    double scaledGV[3];
-    if (i<numVert){
-        // project the vector gA - (gA . gV)/(gV . gV) gV
-        // first create the (gA . gV)/(gV . gV) gV vector 
-        double denom =dot(&gradVVert[i*3],&gradVVert[i*3]);
-        if (abs(denom)>0){
-            vecAssign(scaledGV,&gradVVert[i*3], dot(&gradAVert[i*3],&gradVVert[i*3])/denom);
-        }
-        else {
-            vecAssign(scaledGV,&gradVVert[i*3], 0);
-
-        }
-        // subtract
-        vectorSub(&gradAVert[i*3],scaledGV,proj);
-        
-        // and assgin
-        vecAssign(&force[i*3],proj,-1);
-        /*
-        printf("thread %d \t gradA = [%f,%f,%f]\n",i,gradAVert[i*3],gradAVert[i*3+1],gradAVert[i*3+2]);
-        printf("thread %d \t gradV = [%f,%f,%f]\n",i,gradVVert[i*3],gradVVert[i*3+1],gradVVert[i*3+2]);
-        printf("thread %d \t scaled GV = [%f,%f,%f]\n",i,scaledGV[0],scaledGV[1],scaledGV[2]);
-        printf("thread %d \t f = [%f,%f,%f]\n",i,force[i*3],force[i*3+1],force[i*3+2]);
-        */
+    if (i<numEle){
+        force[i] = - (gradAVert[i] - scale * gradVVert[i]);
     }
+}
+
+__global__ void elementMultiply(double* v1, double* v2, double* out, unsigned int size){
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    if (i<size){
+        out[i] = v1[i]*v2[i];
+        //printf("Thread %d: out value %f\n",i,out[i]);
+    }
+}
+
+
+
+double sum_of_elements(cudaError_t cudaStatus,double* vec,unsigned int size,unsigned int bufferedSize,unsigned int blockSize){
+
+    double out;
+
+    // do the reduction each step sums blockSize*2 number of elements
+    unsigned int numberOfBlocks = ceil(size / (float) blockSize / 2.0);
+    // printf("AddTree with %d blocks,  of blocks size %d, for %d total elements\n",numberOfBlocks,blockSize,_bufferedSize);
+    
+    addTree<<<numberOfBlocks, blockSize, bufferedSize / 2 * sizeof(double) >>> (vec, vec);
+
+
+    if (numberOfBlocks>1){
+        for (int i = numberOfBlocks; i > 1; i /= (blockSize * 2)) {
+            addTree<<<ceil((float)numberOfBlocks/ (blockSize * 2)), blockSize, ceil((float)size / 2)* sizeof(double) >>> (vec, vec);
+        } 
+    }
+    cuda_sync_and_check(cudaStatus,"sum of elements");
+
+    // copy the 0th element out of the vector now that it contains the sum
+    cudaStatus = cudaMemcpy(&out, vec,sizeof(double), cudaMemcpyDeviceToHost);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMemcpy failed! area\n");
+    throw;
+    }
+
+    return out;
+
+}
+
+void cuda_sync_and_check(cudaError_t cudaStatus, const char * caller){
+    cudaStatus = cudaGetLastError();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        throw;
+    }
+    // check that the kernal didn't throw an error
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaDeviceSynchronize returned error %s after launching Kernel %s!\n", cudaGetErrorString(cudaStatus),caller);
+        throw;
+    }
+
+}
+double dotProduct(cudaError_t cudaStatus,double * v1, double * v2, double * scratch, unsigned int size, unsigned int blockSize){
+
+    // first multiply
+    unsigned int numberOfBlocks = ceil(size / (float) blockSize);
+
+    elementMultiply<<<numberOfBlocks,blockSize>>>(v1,v2, scratch,size);
+    cuda_sync_and_check(cudaStatus,"Element Multiply");
+    unsigned int bufferedSize = ceil(size/(2.0*blockSize))*2 *blockSize;
+    // now sum
+    return sum_of_elements(cudaStatus,scratch,size, bufferedSize,blockSize);
+
+
 }

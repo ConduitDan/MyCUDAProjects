@@ -24,7 +24,6 @@ private:
 	void calc_gradV();
 	void facet_to_vertex(double*, double*);
 	void project_to_force();
-	void cuda_sync_and_check(const char *);
 
 
 

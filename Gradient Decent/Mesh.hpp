@@ -39,11 +39,12 @@ private:
     int getNumVertices(FILE* fp);
     int getNumFacets(FILE* fp);
 
-	friend class DeviceMesh; // so device meshes can create meshs via copy
+	//friend class DeviceMesh; // so device meshes can create meshs via copy
 
 public:
 	Mesh();
 	Mesh(const char*);
+	Mesh(unsigned int,unsigned int,double *,unsigned int*);
 	~Mesh();
 
 	// getters
@@ -84,9 +85,6 @@ private:
 	unsigned int _blockSize;
 	unsigned int _bufferedSize;
 	
-	double sum_of_elements(double* ,unsigned int);
-	void cuda_sync_and_check(const char *);
-
 public:
 	DeviceMesh(Mesh*,unsigned int); //copies a Mesh over to the device 
 	~DeviceMesh();
