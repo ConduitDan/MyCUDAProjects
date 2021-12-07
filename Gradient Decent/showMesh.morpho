@@ -1,0 +1,5 @@
+import plot
+
+var m = Mesh("hopefullyASphere.mesh")
+m.addgrade(1)
+Show(plotmesh(m,grade = 1))

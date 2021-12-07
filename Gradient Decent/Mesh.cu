@@ -205,6 +205,7 @@ DeviceMesh::DeviceMesh(Mesh* hostMesh, unsigned int blockSize){
     for (int i = 0; i<_numVert; i++){
         vertIndexStart[i+1]+=vertIndexStart[i];
     }
+
     unsigned int index;
     unsigned int vertex; 
     for (int i = 0; i<_numFacets*3; i++){
@@ -215,11 +216,6 @@ DeviceMesh::DeviceMesh(Mesh* hostMesh, unsigned int blockSize){
         vertToFacet[index] = i;
         vertCount[vertex]++;
     }
-
-    
-
-
-
 
 
     _blockSize = blockSize;
@@ -244,7 +240,7 @@ DeviceMesh::DeviceMesh(Mesh* hostMesh, unsigned int blockSize){
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
     }
-    _cudaStatus = cudaMalloc((void**)&_vertIndexStart, _numVert * sizeof(unsigned int));
+    _cudaStatus = cudaMalloc((void**)&_vertIndexStart, (_numVert+1) * sizeof(unsigned int));
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
     }
@@ -275,7 +271,7 @@ DeviceMesh::DeviceMesh(Mesh* hostMesh, unsigned int blockSize){
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed! vertices\n");
     }
-    _cudaStatus = cudaMemcpy(_vertIndexStart, vertIndexStart, _numVert * sizeof(unsigned int), cudaMemcpyHostToDevice);
+    _cudaStatus = cudaMemcpy(_vertIndexStart, vertIndexStart, (_numVert+1) * sizeof(unsigned int), cudaMemcpyHostToDevice);
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy failed! vertices\n");
     }

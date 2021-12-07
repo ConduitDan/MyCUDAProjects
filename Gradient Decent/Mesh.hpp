@@ -19,10 +19,11 @@
 // [x] get the correct size allocation for area and volume vectors (for add tree)
 // [x] write the print for the mesh
 // [x] write the optimizer 
-// [ ] write vector dot
-// [ ] write vector scale and subtract
-// [ ] GLOBAL constraints
-// [ ] let meshes constuct via pointer assignment (removes need for freind)
+// [x] write vector dot
+// [x] write vector scale and subtract
+// [x] GLOBAL constraints
+// [x] let meshes constuct via pointer assignment (removes need for freind)
+// [x] reproject
 // [ ] write tests
 class Gradient;
 
@@ -38,8 +39,6 @@ private:
     // helper function for file reading
     int getNumVertices(FILE* fp);
     int getNumFacets(FILE* fp);
-
-	//friend class DeviceMesh; // so device meshes can create meshs via copy
 
 public:
 	Mesh();
@@ -71,17 +70,17 @@ private:
 	unsigned int* _facets = nullptr;
 
 	// arrays holding the map from vertex to <facet, # in facet>
-    unsigned int* _vertToFacet; // the a list of facet indcies sorted by vertex
-    unsigned int* _vertIndexStart; // where the indcies in vertToFacet start for a vertex 
+    unsigned int* _vertToFacet = nullptr; // the a list of facet indcies sorted by vertex
+    unsigned int* _vertIndexStart = nullptr; // where the indcies in vertToFacet start for a vertex 
 
 
 	double* _area = nullptr; // holds the area per facet
-	double* _areaSum = nullptr; // array for summing the area per facet
+	//double* _areaSum = nullptr; // array for summing the area per facet
 
 	double* _volume = nullptr; // holds the volume per facet
-	double* _volumeSum = nullptr; // array for summing the volume per facet
+	//double* _volumeSum = nullptr; // array for summing the volume per facet
 
-    cudaError_t _cudaStatus;
+	cudaError_t _cudaStatus = cudaSetDevice(0);
 	unsigned int _blockSize;
 	unsigned int _bufferedSize;
 	

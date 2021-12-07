@@ -11,7 +11,8 @@ private:
     Mesh* _mesh;
     DeviceMesh* _DMesh;
     Gradient* _gradient;
-    double tol = 1e-8;
+    double tol = 1e-3;
+    double _stepSize = 1e-3;
 
     double gradientDesentStep(); // takes a gradient step
 

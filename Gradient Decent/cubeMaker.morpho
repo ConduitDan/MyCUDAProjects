@@ -1,0 +1,51 @@
+/* Minimize the area of a surface at constant enclosed volume. */
+
+import graphics
+import meshtools
+import plot
+import optimize
+
+var Nsteps = 1000 // Maximum number of steps per refinement level
+
+// Create an initial cube
+var m = PolyhedronMesh([ [-0.5, -0.5, -0.5],
+                         [ 0.5, -0.5, -0.5],
+                         [-0.5,  0.5, -0.5],
+                         [ 0.5,  0.5, -0.5],
+                         [-0.5, -0.5,  0.5],
+                         [ 0.5, -0.5,  0.5],
+                         [-0.5,  0.5,  0.5],
+                         [ 0.5,  0.5,  0.5]],
+                       [ [0,1,3,2], [4,5,7,6],
+                         [0,1,5,4], [3,2,6,7],
+                         [0,2,6,4], [1,3,7,5] ])
+
+// Set up the problen
+var problem = OptimizationProblem(m)
+var la = Area()
+problem.addenergy(la)
+
+
+var VE = VolumeEnclosed()
+//print VE.gradient(m)
+print la.gradient(m)
+
+var lv = VolumeEnclosed()
+problem.addconstraint(lv)
+
+// Create the optimizer
+var opt = ShapeOptimizer(problem, m)
+
+// Perform the optimization
+opt.conjugategradient(Nsteps)
+
+// Compare with true area of a sphere for the same volume
+var V0=lv.total(m)
+var Af=la.total(m)
+var R=(V0/(4/3*Pi))^(1/3)
+var area = 4*Pi*R^2
+print "Final area: ${Af} True area: ${area} diff: ${abs(Af-area)}"
+
+var g = plotmesh(m)
+g.title="Cube"
+Show(g)

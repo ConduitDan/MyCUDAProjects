@@ -197,6 +197,7 @@ __global__ void facetToVertex(double* vertexValue, double* facetValue,unsigned i
         vertexValue[i*3 + 2] = 0;
         for (int index = vertIndexStart[i]; index < vertIndexStart[i+1]; index++){
             vectorAdd(&vertexValue[i*3],&facetValue[3*vertToFacet[index]],&vertexValue[i*3]);
+            //printf("vertex %d gets [%f,%f,%f]\n",i,facetValue[3*vertToFacet[index]],facetValue[3*vertToFacet[index]+1],facetValue[3*vertToFacet[index]+2]);
         }
     }
 }
@@ -250,14 +251,14 @@ double sum_of_elements(cudaError_t cudaStatus,double* vec,unsigned int size,unsi
 void cuda_sync_and_check(cudaError_t cudaStatus, const char * caller){
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        throw;
+        fprintf(stderr, "Kernel launch failed: %s. From %s\n", cudaGetErrorString(cudaStatus),caller);
+        throw "Kernel Launch Failure";
     }
     // check that the kernal didn't throw an error
     cudaStatus = cudaDeviceSynchronize();
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaDeviceSynchronize returned error %s after launching Kernel %s!\n", cudaGetErrorString(cudaStatus),caller);
-        throw;
+        throw "Kernel Failure";
     }
 
 }
@@ -269,8 +270,14 @@ double dotProduct(cudaError_t cudaStatus,double * v1, double * v2, double * scra
     elementMultiply<<<numberOfBlocks,blockSize>>>(v1,v2, scratch,size);
     cuda_sync_and_check(cudaStatus,"Element Multiply");
     unsigned int bufferedSize = ceil(size/(2.0*blockSize))*2 *blockSize;
-    // now sum
-    return sum_of_elements(cudaStatus,scratch,size, bufferedSize,blockSize);
+    //now sum
+    double out = sum_of_elements(cudaStatus,scratch,size, bufferedSize,blockSize);
+    
+    // clear the scratch
+    cudaMemset(scratch,0,sizeof(double)*bufferedSize);
+    cuda_sync_and_check(cudaStatus,"dotProduct");
+
+    return out;
 
 
 }

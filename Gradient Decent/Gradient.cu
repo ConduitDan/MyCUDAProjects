@@ -11,7 +11,7 @@ Gradient::Gradient(DeviceMesh *inMesh){
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
     }
-        _cudaStatus = cudaMalloc((void**)&_gradAVert, numVert * 3 * sizeof(double));
+    _cudaStatus = cudaMalloc((void**)&_gradAVert, numVert * 3 * sizeof(double));
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
     }
@@ -24,14 +24,21 @@ Gradient::Gradient(DeviceMesh *inMesh){
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
     }
-
-    // the force vector is used as scrach for taking the dot products for projection,
-    // so it needs to be padded to a multiple of twice the block size so we can effiecntly sum it
-    unsigned int bufferedSize = ceil(numVert/(2.0*_myMesh->get_blockSize()))*2*_myMesh->get_blockSize();
     _cudaStatus = cudaMalloc((void**)&_force, numVert * 3 * sizeof(double));
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
     }
+    // the force vector is used as scrach for taking the dot products for projection,
+    // so it needs to be padded to a multiple of twice the block size so we can effiecntly sum it
+    unsigned int bufferedSize = ceil(numVert * 3 /(2.0*_myMesh->get_blockSize()))*2*_myMesh->get_blockSize();
+
+    
+    _cudaStatus = cudaMalloc((void**)&_scratch, bufferedSize * sizeof(double));
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+
+
 }
 
 Gradient::~Gradient(){
@@ -40,6 +47,7 @@ Gradient::~Gradient(){
     if (_gradVFacet) cudaFree(_gradVFacet);
     if (_gradVVert) cudaFree(_gradVVert);
     if (_force) cudaFree(_force);
+    if (_scratch) cudaFree(_scratch);
 
 }
     
@@ -79,9 +87,9 @@ void Gradient::facet_to_vertex(double* _facetValue,double* _vertexValue){
 }
 
 void Gradient::project_to_force(){
-    double numerator = dotProduct(_cudaStatus,_gradAVert,_gradVVert,_force,_myMesh->get_numVert() * 3,_myMesh->get_blockSize() );
-    double denominator = dotProduct(_cudaStatus,_gradVVert,_gradVVert,_force,_myMesh->get_numVert() * 3,_myMesh->get_blockSize() );
-    
+    double numerator = dotProduct(_cudaStatus,_gradAVert,_gradVVert,_scratch,_myMesh->get_numVert() * 3,_myMesh->get_blockSize() );
+    double denominator = dotProduct(_cudaStatus,_gradVVert,_gradVVert,_scratch,_myMesh->get_numVert() * 3,_myMesh->get_blockSize() );
+
     unsigned int numberOfBlocks = ceil(_myMesh->get_numVert() * 3 / (float) _myMesh->get_blockSize());
 
     projectForce<<<numberOfBlocks,_myMesh->get_blockSize()>>>(_force,_gradAVert,_gradVVert,numerator/denominator,_myMesh->get_numVert() * 3);
@@ -89,3 +97,14 @@ void Gradient::project_to_force(){
 
 }
 
+void Gradient::reproject(double res){
+    calc_gradV();
+    // do the force inner product
+    double sol = res/dotProduct(_cudaStatus,_gradVVert,_gradVVert,_scratch,_myMesh->get_numVert(),_myMesh->get_blockSize());
+    
+    //move and scale (scale = sol, dir = gradV)
+    unsigned int numberOfBlocks = ceil(_myMesh->get_numVert() * 3 / (float) _myMesh->get_blockSize());
+
+    addWithMultKernel<<<numberOfBlocks,_myMesh->get_blockSize()>>>(_myMesh->get_vert(),_gradVVert,sol,_myMesh->get_numVert()*3);
+
+}

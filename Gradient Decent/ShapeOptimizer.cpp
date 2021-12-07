@@ -3,7 +3,7 @@
 ShapeOptimizer::ShapeOptimizer(const char * fileName)
 {
     _mesh = new Mesh(fileName);
-    _DMesh = new DeviceMesh(_mesh, 128);
+    _DMesh = new DeviceMesh(_mesh, 256);
     _gradient = new Gradient(_DMesh);
 
 }
@@ -16,17 +16,35 @@ ShapeOptimizer::~ShapeOptimizer()
 }
 double ShapeOptimizer::gradientDesentStep(){
     _gradient->calc_force();
-    _DMesh->decend_gradient(_gradient,.01);
+    _DMesh->decend_gradient(_gradient,_stepSize);
     return _DMesh->area();
 }
 
 
 double ShapeOptimizer::gradientDesent(int n){ // do n gradient desent steps
-    fprintf(stdout,"At Start: volume = %f \t area = %f \n",_DMesh->volume(),_DMesh->area());
+    double volume = _DMesh->volume();
+    double res = 0;
+    fprintf(stdout,"At Start: volume = %f \t area = %f \n",volume,_DMesh->area());
     for (int i = 0; i<n; i++){
+        int j = 0;
         gradientDesentStep();
+        res = _DMesh->volume()-volume;
+        while (abs(res)>tol){
+            _gradient->reproject(-res);
+            res = _DMesh->volume()-volume;
+
+            j++;
+            if (j>100){
+                printf("Warning: Too many steps in constraint satisfaction\n");
+                break;
+            }
+        }
+
         fprintf(stdout,"Step %d: volume = %f \t area = %f \n",i+1,_DMesh->volume(),_DMesh->area());
+    
     }
+
+
     return _DMesh->volume();
 }
 

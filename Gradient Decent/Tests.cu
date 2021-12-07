@@ -1,37 +1,235 @@
 //Tests.cpp
-//here are some tests without a harness
-
+//here are some tests
 
 #include "Mesh.hpp"
 #include <iostream>
 #define BOOST_TEST_MAIN
-#include "boost/test/unit_test.hpp"
-namespace bt = boost::unit_test;
+#include <boost/test/included/unit_test.hpp>
+
+//namespace bt = boost::unit_test;
 
 
 
-    //#####################
-    // mesh tests
-    //#####################
+//#####################
+// mesh tests
+//#####################
+// constuctors
+// read in from file
 
+// given pointers
+
+//#####################
+// device mesh tests
+//#####################
+
+// constuct from mesh
+
+// calc area
+/*
 BOOST_AUTO_TEST_CASE(area){
     //area test
-    
     Mesh square = Mesh("square.mesh");
-    square.print("StillASquare.mesh");
     DeviceMesh dSquare = DeviceMesh(&square,128);
     double area = dSquare.area();
     std::cout<<"Testing area of a square\n";
-    std::cout<<"Expected value: 1\t Acutal value: "<<area<<std::endl;
-    if (area == 1.0) std::cout<<"Passed\n";
-    else std::cout<<"Failed\n";
+    BOOST_CHECK (area == 1.0);
+    cudaDeviceReset();
+}*/
+// calc volume
+//
 
 
-    double * areaPerFacet = dSquare.check_area_on_facet();
-    for (int i = 0; i< dSquare.get_numFacets(); i++){
-       std::cout<<"Facet "<<i+1<<" has area: "<<areaPerFacet[i]<<std::endl;
+//#####################
+// Kernal Tests
+//#####################
+
+// sum_of_elements
+// dot product
+// add with MultKernal
+// area
+// areaGrad
+BOOST_AUTO_TEST_CASE(areaGrad){
+
+
+    cudaError cudaStatus;
+
+    // expected Vals
+
+    double firstEle[14] = { -1, 1, -1, 1, -1, 1, -1, 1, 0, 0, 0, 0, 0, 0};
+    double secondEle[14] = { -1, -1, 1, 1, -1, -1, 1, 1, 0, 0, 0, 0, 0, 0};
+    double thirdEle[14] = { -1, -1, -1, -1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0};
+    
+    Mesh myMesh = Mesh("cube.mesh");
+    DeviceMesh myDMesh = DeviceMesh(&myMesh,128);
+    Gradient myGrad = Gradient(&myDMesh);
+    myGrad.calc_force();
+
+    double * gradA = new double[14*3];
+    cudaStatus = cudaMemcpy(gradA, myGrad.get_gradA(), 14 * 3 *  sizeof(double), cudaMemcpyDeviceToHost);
+    BOOST_REQUIRE (cudaStatus == cudaSuccess);
+
+    double tol = 1e-6;
+    for (int i = 0; i<14; i++){
+        BOOST_CHECK(abs(firstEle[i]-gradA[i*3])<tol);
+        BOOST_CHECK(abs(secondEle[i]-gradA[i*3+1])<tol);
+        BOOST_CHECK(abs(thirdEle[i]-gradA[i*3+2])<tol);
+
     }
+    cudaStatus = cudaDeviceReset();
 }
+
+// volume
+// volumeGrad
+
+BOOST_AUTO_TEST_CASE(volumeGrad){
+
+    cudaError cudaStatus;
+
+    // expected Vals
+    double firstEle[14] = {-0.166667, 0.166667, -0.166667, 0.166667, -0.166667, 0.166667, -0.166667, 0.166667, 0, 0, 0, 0, -0.333333, 0.333333};
+    double secondEle[14] = { -0.166667, -0.166667, 0.166667, 0.166667, -0.166667, -0.166667, 0.166667, 0.166667, 0, 0, -0.333333, 0.333333, 0, 0 };
+    double thirdEle[14] = { -0.166667, -0.166667, -0.166667, -0.166667, 0.166667, 0.166667, 0.166667, 0.166667, -0.333333, 0.333333, 0, 0, 0, 0 };
+    
+    Mesh myMesh = Mesh("cube.mesh");
+    DeviceMesh myDMesh = DeviceMesh(&myMesh,128);
+    Gradient myGrad = Gradient(&myDMesh);
+    myGrad.calc_force();
+
+    double * gradV = new double[14*3];
+    cudaStatus = cudaMemcpy(gradV, myGrad.get_gradV(), 14 * 3 *  sizeof(double), cudaMemcpyDeviceToHost);
+    BOOST_REQUIRE (cudaStatus == cudaSuccess);
+
+    double tol = 1e-4;
+    for (int i = 0; i<14; i++){
+        BOOST_CHECK(abs(firstEle[i]-gradV[i*3])<tol);
+        BOOST_CHECK(abs(secondEle[i]-gradV[i*3+1])<tol);
+        BOOST_CHECK(abs(thirdEle[i]-gradV[i*3+2])<tol);
+
+    }
+
+    cudaStatus = cudaDeviceReset();
+}
+
+
+
+
+
+// face to Vertex
+BOOST_AUTO_TEST_CASE(face_to_vertex){
+    //set up some verteices
+    // x--x--x
+    //  \/ \/
+    //  x --x
+    cudaError cudaStatus;
+
+
+    unsigned int numVert = 5;
+    unsigned int numFace = 3;
+    unsigned int blockSize = 128;
+
+
+    double vert[5*3] = {0.5,0,0,
+                        1.5,0,0,
+                        0,1,0,
+                        1,1,0,
+                        2,1,0};
+
+    // set up some faces
+    unsigned int faces[9] = {0,2,3,
+                             0,1,3,
+                             1,3,4};
+    // set up some values on the faces
+    //each face gets a 3 vectors
+    
+    // create a mesh from it and then put it on the GPU
+    Mesh myMesh = Mesh(numVert,numFace,vert,faces);
+    DeviceMesh myDMesh = DeviceMesh(&myMesh,blockSize);
+    // check that the maps are create correctly
+
+    unsigned int *vertToFacet = new unsigned int[numFace * 3] ;
+    cudaStatus = cudaMemcpy(vertToFacet, myDMesh.get_vertToFacet(), numFace * 3 *  sizeof(unsigned int), cudaMemcpyDeviceToHost);
+    BOOST_REQUIRE (cudaStatus == cudaSuccess);
+
+    unsigned int *vertToFacetStart = new unsigned int[(numVert + 1)];
+    cudaStatus = cudaMemcpy(vertToFacetStart, myDMesh.get_vertIndexStart(), (numVert + 1) *  sizeof(unsigned int), cudaMemcpyDeviceToHost);
+    BOOST_REQUIRE (cudaStatus == cudaSuccess);
+
+    myDMesh.get_vertIndexStart();
+
+    unsigned int index;
+    for (int i = 0; i< numVert; i++){
+        for (int j = vertToFacetStart[i]; j< vertToFacetStart[i+1];j++){
+            index = vertToFacet[j];
+            BOOST_CHECK(faces[index]==i);
+        }
+    }
+
+
+    // create the expected answer
+    double *expectedVertVals = new double[5*3];
+    for (int i = 0; i< numVert*3; i++){
+        expectedVertVals[i] = 0;
+    }
+
+    double *faceValues = new double[27];
+    for (int i = 0; i<9; i++){
+        faceValues[i*3]=(double)i/10.0;
+        faceValues[i*3+1]=(double)i/10.0;
+        faceValues[i*3+2]=(double)i/10.0;
+
+        // calculate the expected answer
+        expectedVertVals[faces[i]*3] += (double)i/10.0;
+        expectedVertVals[faces[i]*3+1] += (double)i/10.0;
+        expectedVertVals[faces[i]*3+2] += (double)i/10.0;
+    }
+    double *dfaceValues = nullptr;
+    cudaStatus = cudaMalloc((void**)&dfaceValues, numFace * 9 * sizeof(double));
+    BOOST_REQUIRE (cudaStatus == cudaSuccess);
+    cudaStatus = cudaMemcpy(dfaceValues, faceValues, numFace * 9 * sizeof(double), cudaMemcpyHostToDevice);
+    BOOST_REQUIRE (cudaStatus == cudaSuccess);
+    
+
+
+    double *vertValues = nullptr;
+    // allocate space for the values on the vertex
+    cudaStatus = cudaMalloc((void**)&vertValues, numVert * 3 * sizeof(double));
+    BOOST_REQUIRE (cudaStatus == cudaSuccess);
+    unsigned int numberOfBlocks = ceil(numVert/(float)blockSize)*blockSize;
+    // calculate face to vertex
+    facetToVertex<<<numberOfBlocks, blockSize>>>(vertValues,dfaceValues,myDMesh.get_vertToFacet(), myDMesh.get_vertIndexStart(),numVert);
+
+    // copy back
+    double *actualVertVals = new double[5*3];
+    cudaStatus = cudaMemcpy(actualVertVals, vertValues, numVert * 3 *  sizeof(double), cudaMemcpyDeviceToHost);
+    BOOST_REQUIRE (cudaStatus == cudaSuccess);
+
+
+    // does it match expectation?
+    for (int i = 0; i<numVert*3; i++){
+        BOOST_CHECK(actualVertVals[i]==expectedVertVals[i]);
+        if (actualVertVals[i]!=expectedVertVals[i]){
+            printf("Element %d Failed, Expected %f\t found %f\n",i,expectedVertVals[i],actualVertVals[i]);
+        }
+    }
+
+
+    //cudaFree(vertValues);
+    //cudaFree(dfaceValues);
+   // delete actualVertVals;
+ //   delete faceValues;
+
+
+
+}
+// project force
+// element multiply
+
+
+
+
+
+
+
 /*
     //###########################
     // kernal tests

@@ -16,8 +16,10 @@ private:
 	double *_gradVVert = nullptr;
 
 	double *_force = nullptr;
+	double *_scratch = nullptr;
 
-	cudaError_t _cudaStatus;
+	cudaError_t _cudaStatus = cudaSetDevice(0);
+;
 
 
 	void calc_gradA();
@@ -31,7 +33,11 @@ public:
 	Gradient(DeviceMesh *inMesh);
 	~Gradient();
 	void calc_force();
+	void reproject(double res);
 
+
+	double* get_gradA(){return _gradAVert;}
+	double* get_gradV(){return _gradVVert;}
 	double* get_force(){return _force;}
 };
 #endif
