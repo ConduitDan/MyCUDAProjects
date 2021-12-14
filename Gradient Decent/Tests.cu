@@ -25,7 +25,7 @@
 // constuct from mesh
 
 // calc area
-/*
+
 BOOST_AUTO_TEST_CASE(area){
     //area test
     Mesh square = Mesh("square.mesh");
@@ -33,8 +33,7 @@ BOOST_AUTO_TEST_CASE(area){
     double area = dSquare.area();
     std::cout<<"Testing area of a square\n";
     BOOST_CHECK (area == 1.0);
-    cudaDeviceReset();
-}*/
+}
 // calc volume
 //
 
@@ -75,7 +74,6 @@ BOOST_AUTO_TEST_CASE(areaGrad){
         BOOST_CHECK(abs(thirdEle[i]-gradA[i*3+2])<tol);
 
     }
-    cudaStatus = cudaDeviceReset();
 }
 
 // volume
@@ -107,7 +105,7 @@ BOOST_AUTO_TEST_CASE(volumeGrad){
 
     }
 
-    cudaStatus = cudaDeviceReset();
+    delete[] gradV;
 }
 
 
@@ -127,15 +125,14 @@ BOOST_AUTO_TEST_CASE(face_to_vertex){
     unsigned int numFace = 3;
     unsigned int blockSize = 128;
 
-
-    double vert[5*3] = {0.5,0,0,
+    double *vert = new double[15] {0.5,0,0,
                         1.5,0,0,
                         0,1,0,
                         1,1,0,
                         2,1,0};
 
     // set up some faces
-    unsigned int faces[9] = {0,2,3,
+    unsigned int *faces = new unsigned int[9] {0,2,3,
                              0,1,3,
                              1,3,4};
     // set up some values on the faces
@@ -213,10 +210,10 @@ BOOST_AUTO_TEST_CASE(face_to_vertex){
     }
 
 
-    //cudaFree(vertValues);
-    //cudaFree(dfaceValues);
-   // delete actualVertVals;
- //   delete faceValues;
+    cudaFree(vertValues);
+    cudaFree(dfaceValues);
+    delete[] actualVertVals;
+    delete[] faceValues;
 
 
 

@@ -27,8 +27,8 @@ Mesh::Mesh(unsigned int numVertIn,unsigned int numFacetsIn,double * vertIn,unsig
 
 Mesh::~Mesh(){
 
-    if (_vert) delete _vert;
-    if (_facets) delete _facets;
+    if (_vert) delete[] _vert;
+    if (_facets) delete[] _facets;
 }
 
 
@@ -286,13 +286,31 @@ DeviceMesh::DeviceMesh(Mesh* hostMesh, unsigned int blockSize){
 }
 
 DeviceMesh::~DeviceMesh(){
-    if (_vert) cudaFree(_vert);
-    if (_facets) cudaFree(_facets);
-    if (_vertToFacet) cudaFree(_facets);
-    if (_vertIndexStart) cudaFree(_facets);
-    if (_area) cudaFree(_area);
+    if (_vert) {
+	    cudaFree(_vert);
+	    _vert = nullptr;
+    }
+    if (_facets){
+	    cudaFree(_facets);
+	    _facets = nullptr;
+    }
+    if (_vertToFacet){
+	    cudaFree(_vertToFacet);
+	    _vertToFacet = nullptr;
+    }
+    if (_vertIndexStart){
+	    cudaFree(_vertIndexStart);
+	    _vertIndexStart = nullptr;
+    }
+    if (_area){
+	    cudaFree(_area);
+	    _area = nullptr;
+    }
     //if (_areaSum) cudaFree(_areaSum);
-    if (_volume) cudaFree(_volume);
+    if (_volume){
+	    cudaFree(_volume);
+	    _volume = nullptr;
+    }
     //if (_volumeSum) cudaFree(_volumeSum);
 }
 

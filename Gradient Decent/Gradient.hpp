@@ -19,7 +19,6 @@ private:
 	double *_scratch = nullptr;
 
 	cudaError_t _cudaStatus = cudaSetDevice(0);
-;
 
 
 	void calc_gradA();

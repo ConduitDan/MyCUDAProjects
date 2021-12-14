@@ -42,13 +42,30 @@ Gradient::Gradient(DeviceMesh *inMesh){
 }
 
 Gradient::~Gradient(){
-    if (_gradAFacet) cudaFree(_gradAFacet);
-    if (_gradAVert) cudaFree(_gradAVert);
-    if (_gradVFacet) cudaFree(_gradVFacet);
-    if (_gradVVert) cudaFree(_gradVVert);
-    if (_force) cudaFree(_force);
-    if (_scratch) cudaFree(_scratch);
-
+    if (_gradAFacet){
+	    cudaFree(_gradAFacet);
+	    _gradAFacet = nullptr;
+    }
+    if (_gradAVert){
+	    cudaFree(_gradAVert);
+    	_gradAVert = nullptr;
+    }
+    if (_gradVFacet){
+	    cudaFree(_gradVFacet);
+	    _gradVFacet = nullptr;
+    }
+    if (_gradVVert){
+	    cudaFree(_gradVVert);
+	    _gradVVert = nullptr;
+    }
+    if (_force){
+	    cudaFree(_force);
+	    _force = nullptr;
+    }
+    if (_scratch){
+	    cudaFree(_scratch);
+	_scratch = nullptr;
+    }
 }
     
     
