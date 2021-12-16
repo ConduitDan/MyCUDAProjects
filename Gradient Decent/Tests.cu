@@ -2,13 +2,25 @@
 //here are some tests
 
 #include "Mesh.hpp"
+#include "ShapeOptimizer.hpp"
 #include <iostream>
 #define BOOST_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>
 
 //namespace bt = boost::unit_test;
+//#####################
+// Cube-> sphere test
+//#####################
+BOOST_AUTO_TEST_CASE(cube_to_sphere){
+    ShapeOptimizer myOptimizer("testCube.mesh");
+    myOptimizer.gradientDesent(12);
 
+    Mesh acutal = myOptimizer.get_optimized_mesh();
+    Mesh expected = Mesh("testCubeRelaxed.mesh");
 
+    BOOST_CHECK(acutal==expected);
+
+}
 
 //#####################
 // mesh tests
@@ -219,92 +231,60 @@ BOOST_AUTO_TEST_CASE(face_to_vertex){
 
 }
 // project force
+BOOST_AUTO_TEST_CASE(project_force){
+
+
+    // expected Vals
+   // double firstEle[14] = { 0.42265, -0.42265, 0.42265, -0.42265, 0.42265, -0.42265, 0.42265, -0.42265, 0, 0, 0, 0, -1.1547, 1.1547 };
+   // double secondEle[14] = { 0.42265, 0.42265, -0.42265, -0.42265, 0.42265, 0.42265, -0.42265, -0.42265, 0, 0, -1.1547, 1.1547, 0, 0 };
+   // double thirdEle[14] = { 0.42265, 0.42265, 0.42265, 0.42265, -0.42265, -0.42265, -0.42265, -0.42265, -1.1547, 1.1547, 0, 0, 0, 0 };
+    double firstEle[14] =  { 0.5, -0.5, 0.5, -0.5, 0.5, -0.5, 0.5, -0.5, 0, 0, 0, 0, -1, 1};
+    double secondEle[14] = { 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0, 0, -1, 1, 0, 0};
+    double thirdEle[14] = { 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -1, 1, 0, 0, 0, 0};
+    
+    double tol = 1e-4;
+
+
+    Mesh myMesh = Mesh("cube.mesh");
+    DeviceMesh myDMesh = DeviceMesh(&myMesh,128);
+    Gradient myGrad = Gradient(&myDMesh);
+    myGrad.calc_force();
+
+    double * force = new double[14*3];
+    cudaError cudaStatus = cudaMemcpy(force, myGrad.get_force(), 14 * 3 *  sizeof(double), cudaMemcpyDeviceToHost);
+    BOOST_REQUIRE (cudaStatus == cudaSuccess);
+
+    double * gradV = new double[14*3];
+    cudaStatus = cudaMemcpy(gradV, myGrad.get_gradV(), 14 * 3 *  sizeof(double), cudaMemcpyDeviceToHost);
+    BOOST_REQUIRE (cudaStatus == cudaSuccess);
+
+    double * gradA = new double[14*3];
+    cudaStatus = cudaMemcpy(gradA, myGrad.get_gradA(), 14 * 3 *  sizeof(double), cudaMemcpyDeviceToHost);
+    BOOST_REQUIRE (cudaStatus == cudaSuccess);
+
+
+    double GAGV = 0;
+    double GVGV = 0;
+    for (int i = 0; i<14*3; i++){
+        GAGV += gradA[i]*gradV[i];
+        GVGV += gradV[i]*gradV[i];
+    }
+
+    BOOST_CHECK(abs(GAGV-4)<tol);
+    BOOST_CHECK(abs(GVGV-1.33333)<tol);
+
+    for (int i = 0; i<14; i++){
+        BOOST_CHECK(abs(firstEle[i]-force[i*3])<tol);
+        BOOST_CHECK(abs(secondEle[i]-force[i*3+1])<tol);
+        BOOST_CHECK(abs(thirdEle[i]-force[i*3+2])<tol);
+    }
+
+    delete[] force;
+    delete[] gradA;
+    delete[] gradV;
+
+
+}
 // element multiply
 
 
-
-
-
-
-
-/*
-    //###########################
-    // kernal tests
-    //###########################
-
-    //add tree
-    unsigned int blockSize = 4;
-    unsigned int size = 8;
-    double* array = new double[size];
-    for (int i = 0; i <size; i++){
-        array[i] = i;
-    }
-
-
-
-    double *dArray = nullptr;
-    
-    unsigned int _bufferedSize = ceil(size / (float)( blockSize * 2)) * 2 * blockSize; // for 
-    cudaError_t _cudaStatus;
-
-    //allocate
-    _cudaStatus = cudaMalloc((void**)&dArray, _bufferedSize * sizeof(double));
-    if (_cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed!");
-    }
-    // copy over
-    _cudaStatus = cudaMemcpy(dArray,array, _bufferedSize * sizeof(double), cudaMemcpyHostToDevice);
-    if (_cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMemcpy failed! vertices\n");
-    }
-
-    //add
-    
-    double out = sum_of_elements(_cudaStatus, dArray, size, _bufferedSize, blockSize);
-    // copy the 0th element out of the vector now that it contains the sum
-    cudaFree(dArray);
-
-
-    int expected = size*(size-1)/2;
-    std::cout<<"Testing addtree \n";
-    std::cout<<"Expected value: "<<expected<<"\t Acutal value: "<<out<<std::endl;
-    if (out == expected) std::cout<<"Passed\n";
-    else std::cout<<"Failed\n";
-
-
-    size = 10;
-    _bufferedSize = ceil(size / (float)( blockSize * 2)) * 2 * blockSize; // for 
-
-    // Dot product
-    double* array1 = new double[size];
-    double* array2 = new double[size];
-    for (int i = 0; i <size; i++){
-        array1[i] = i;
-        array2[i] = 2;
-    }
-    double *dArray1 = nullptr;
-    double *dArray2 = nullptr;
-    double *dscratch = nullptr;
-
-    _cudaStatus = cudaMalloc((void**)&dArray1, size * sizeof(double));
-    _cudaStatus = cudaMalloc((void**)&dArray2, size * sizeof(double));
-    _cudaStatus = cudaMalloc((void**)&dscratch, _bufferedSize * sizeof(double));
-    
-    _cudaStatus = cudaMemcpy(dArray1,array1, size * sizeof(double), cudaMemcpyHostToDevice);
-    _cudaStatus = cudaMemcpy(dArray2,array2, size * sizeof(double), cudaMemcpyHostToDevice);
-
-    double ans = dotProduct(_cudaStatus,dArray1,dArray2,dscratch,size,blockSize);
-    expected = size*(size-1);
-    std::cout<<"Testing dot product \n";
-    std::cout<<"Expected value: "<<expected<<"\t Acutal value: "<<ans<<std::endl;
-    if (expected == ans) std::cout<<"Passed\n";
-    else std::cout<<"Failed\n";
-
-    cudaFree(dArray1);
-    cudaFree(dArray2);
-    cudaFree(dscratch);
-
-
-
-
-}*/

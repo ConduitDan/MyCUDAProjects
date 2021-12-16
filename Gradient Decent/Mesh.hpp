@@ -46,6 +46,9 @@ public:
 	Mesh(unsigned int,unsigned int,double *,unsigned int*);
 	~Mesh();
 
+	bool operator ==(const Mesh& rhs);
+
+
 	// getters
 	unsigned int get_numVert(){ return _numVert; }
 	unsigned int get_numFacets(){ return _numFacets; }

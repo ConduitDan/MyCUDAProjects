@@ -109,7 +109,7 @@ void Gradient::project_to_force(){
 
     unsigned int numberOfBlocks = ceil(_myMesh->get_numVert() * 3 / (float) _myMesh->get_blockSize());
 
-    projectForce<<<numberOfBlocks,_myMesh->get_blockSize()>>>(_force,_gradAVert,_gradVVert,numerator/denominator,_myMesh->get_numVert() * 3);
+    projectForce<<<numberOfBlocks,_myMesh->get_blockSize()>>>(_force,_gradAVert,_gradVVert,numerator/abs(denominator),_myMesh->get_numVert() * 3);
     cuda_sync_and_check(_cudaStatus,"project force");
 
 }
@@ -122,6 +122,6 @@ void Gradient::reproject(double res){
     //move and scale (scale = sol, dir = gradV)
     unsigned int numberOfBlocks = ceil(_myMesh->get_numVert() * 3 / (float) _myMesh->get_blockSize());
 
-    addWithMultKernel<<<numberOfBlocks,_myMesh->get_blockSize()>>>(_myMesh->get_vert(),_gradVVert,sol,_myMesh->get_numVert()*3);
+    addWithMultKernel<<<numberOfBlocks,_myMesh->get_blockSize()>>>(_myMesh->get_vert(),_gradVVert,sol*0.1,_myMesh->get_numVert()*3);
 
 }

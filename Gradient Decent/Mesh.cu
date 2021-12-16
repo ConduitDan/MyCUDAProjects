@@ -31,6 +31,31 @@ Mesh::~Mesh(){
     if (_facets) delete[] _facets;
 }
 
+bool Mesh::operator ==(const Mesh& rhs){
+    double tol = 1e-4;// This could be smaller
+    
+    if (_numVert!=rhs._numVert){
+        return false;
+    }
+    
+    if (_numFacets!=rhs._numFacets){
+        return false;
+    }
+    
+    
+    for (int i = 0; i<_numVert*3; i++){
+        if (abs((_vert[i]-rhs._vert[i])>tol)){
+            return false;
+        }
+    }
+    for (int i = 0; i<_numFacets*3; i++){
+        if (_facets[i]!=rhs._facets[i]){
+            return false;
+        }
+    }
+    return true;
+
+}
 
 
 int Mesh::getNumVertices(FILE* fp) {
@@ -374,10 +399,10 @@ double* DeviceMesh::check_area_on_facet(){
 
 void DeviceMesh::decend_gradient(Gradient *myGrad,double lambda){
 
-    unsigned int numberOfBlocks = ceil(_numFacets / (float) _blockSize);
+    unsigned int numberOfBlocks = ceil(_numVert*3 / (float) _blockSize);
 
     // call vector add kerenal with force pointer and vertex pointer
-    addWithMultKernel<<<numberOfBlocks,_blockSize>>>(_vert ,myGrad->get_force(),lambda,_numVert);
+    addWithMultKernel<<<numberOfBlocks,_blockSize>>>(_vert ,myGrad->get_force(),lambda,_numVert*3);
     cuda_sync_and_check(_cudaStatus,"add with scale");
 
 }

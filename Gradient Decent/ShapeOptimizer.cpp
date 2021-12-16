@@ -5,6 +5,7 @@ ShapeOptimizer::ShapeOptimizer(const char * fileName)
     _mesh = new Mesh(fileName);
     _DMesh = new DeviceMesh(_mesh, 256);
     _gradient = new Gradient(_DMesh);
+    _startingVol = _DMesh->volume();
 
 }
 
@@ -17,30 +18,45 @@ ShapeOptimizer::~ShapeOptimizer()
 double ShapeOptimizer::gradientDesentStep(){
     _gradient->calc_force();
     _DMesh->decend_gradient(_gradient,_stepSize);
+    reproject_constraints();
     return _DMesh->area();
+}
+
+double ShapeOptimizer::reproject_constraints(){
+    double res = _startingVol -_DMesh->volume();
+    int j = 0;
+    while (abs(res)>tol){
+        _gradient->reproject(res);
+        res = _startingVol -_DMesh->volume();
+
+        j++;
+        if (j>_maxConstraintSteps){
+            printf("Warning: Too many steps in constraint satisfaction\n");
+            break;
+        }
+    }
+    return res;
+
 }
 
 
 double ShapeOptimizer::gradientDesent(int n){ // do n gradient desent steps
-    double volume = _DMesh->volume();
+    double area = _DMesh->area();
     double res = 0;
-    fprintf(stdout,"At Start: volume = %f \t area = %f \n",volume,_DMesh->area());
+    double lastArea = 0;
+    double dArea = 0;
+    fprintf(stdout,"At Start: volume = %f \t area = %f \n",_DMesh->volume(),_DMesh->area());
     for (int i = 0; i<n; i++){
         int j = 0;
         gradientDesentStep();
-        res = _DMesh->volume()-volume;
-        while (abs(res)>tol){
-            _gradient->reproject(-res);
-            res = _DMesh->volume()-volume;
+        lastArea = area;
+        area = _DMesh->area();
+        dArea = area - lastArea;
+        
 
-            j++;
-            if (j>100){
-                printf("Warning: Too many steps in constraint satisfaction\n");
-                break;
-            }
-        }
 
-        fprintf(stdout,"Step %d: volume = %f \t area = %f \n",i+1,_DMesh->volume(),_DMesh->area());
+        fprintf(stdout,"Step %d: volume = %f \t area = %f delta area = %f\n",i+1,_DMesh->volume(),area,dArea);
+        if (-dArea<_dAtol){break;}
     
     }
 
