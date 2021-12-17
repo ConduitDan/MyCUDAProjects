@@ -117,11 +117,11 @@ void Gradient::project_to_force(){
 void Gradient::reproject(double res){
     calc_gradV();
     // do the force inner product
-    double sol = res/dotProduct(_cudaStatus,_gradVVert,_gradVVert,_scratch,_myMesh->get_numVert(),_myMesh->get_blockSize());
-    
+    double m = dotProduct(_cudaStatus,_gradVVert,_gradVVert,_scratch,_myMesh->get_numVert()*3,_myMesh->get_blockSize());
+    double sol = res/m;
     //move and scale (scale = sol, dir = gradV)
     unsigned int numberOfBlocks = ceil(_myMesh->get_numVert() * 3 / (float) _myMesh->get_blockSize());
 
-    addWithMultKernel<<<numberOfBlocks,_myMesh->get_blockSize()>>>(_myMesh->get_vert(),_gradVVert,sol*0.1,_myMesh->get_numVert()*3);
+    addWithMultKernel<<<numberOfBlocks,_myMesh->get_blockSize()>>>(_myMesh->get_vert(),_gradVVert,sol,_myMesh->get_numVert()*3);
 
 }

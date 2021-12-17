@@ -56,7 +56,7 @@ double ShapeOptimizer::gradientDesent(int n){ // do n gradient desent steps
 
 
         fprintf(stdout,"Step %d: volume = %f \t area = %f delta area = %f\n",i+1,_DMesh->volume(),area,dArea);
-        if (-dArea<_dAtol){break;}
+        if (abs(dArea)<_dAtol){break;}
     
     }
 

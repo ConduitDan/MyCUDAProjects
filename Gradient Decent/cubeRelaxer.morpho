@@ -1,0 +1,46 @@
+/* Minimize the area of a surface at constant enclosed volume. */
+
+import graphics
+import meshtools
+import plot
+import optimize
+
+var Nsteps = 10000 // Maximum number of steps per refinement level
+
+var m = Mesh("cube7.mesh")
+
+// Set up the problen
+var problem = OptimizationProblem(m)
+var la = Area()
+problem.addenergy(la)
+
+
+var lv = VolumeEnclosed()
+//print VE.gradient(m)
+//print la.gradient(m)
+
+var Ga = la.gradient(m)
+var Gv = lv.gradient(m)
+
+//var F = -(Ga-Ga.inner(Gv)/Gv.norm()*Gv))
+
+problem.addconstraint(lv)
+
+// Create the optimizer
+var opt = ShapeOptimizer(problem, m)
+
+// Perform the optimization
+opt.relax(Nsteps)
+//opt.conjugategradient(Nsteps)
+
+// Compare with true area of a sphere for the same volume
+var V0=lv.total(m)
+var Af=la.total(m)
+//var R=(V0/(4/3*Pi))^(1/3)
+//var area = 4*Pi*R^2
+//print "Final area: ${Af} True area: ${area} diff: ${abs(Af-area)}"
+
+//var g = plotmesh(m)
+//g.title="Cube"
+//Show(g)
+//m.save("testCubeRelaxed.mesh")
