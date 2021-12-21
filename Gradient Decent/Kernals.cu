@@ -2,6 +2,60 @@
 // here is where all the device and global functions live
 
 #include "Kernals.hpp"
+
+
+// make this thing a singleton
+
+DeviceAPI* DeviceAPI::_instance = nullptr;
+
+DeviceAPI* DeviceAPI::Instance() {
+    if (_instance == nullptr) { // if an instance doesn't exist
+        _instance = new DeviceAPI; // create a new one
+    }
+    return _instance; // return the pointer to it
+}
+
+void CUDA::CUDA(){
+    cudaStatus = cudaSetDevice(0);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
+    }
+}
+
+
+void* CUDA::allocate( unsigned int size){
+
+    void *tempPTR;
+
+    cudaStatus = cudaMalloc((void**)&tempPTR, size);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMalloc failed!");
+    }
+    return tempPTR; // unique ptr safe way to to do this I hope;
+}
+void CUDA::deallocate(void* devicePointer){
+    cudaFree(devicePointer)
+}
+
+
+void CUDA::copy_to_device(void* devicePointer, void* hostPointer, unsigned int size){
+    _cudaStatus = cudaMemcpy(devicePointer, hostPointer, size, cudaMemcpyHostToDevice);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMemcpy failed!");
+    }
+
+
+}
+void CUDA::copy_to_host(void * hostPointer, void * devicepointer, unsigned int size){
+    _cudaStatus = cudaMemcpy(hostPointer, devicepointer, size, cudaMemcpyDeviceToHost);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMemcpy failed!\n");
+    }
+}
+
+
+
+
 __device__ void vectorSub(double * v1, double * v2, double * vOut){
     
     *vOut = *v1-*v2;
@@ -218,8 +272,35 @@ __global__ void elementMultiply(double* v1, double* v2, double* out, unsigned in
 }
 
 
+void CUDA::project_force(double* force,double *gradAVert,double * gradVVert, double scale,unsigned int size){
+    unsigned int numberOfBlocks = ceil(size / (float) blockSize);
+    projectForce<<<blockSize,numberOfBlocks>>>(force,gradAVert,gradVVert,scale,size)
+    cuda_sync_and_check(cudaStatus,"project to force");
 
-double sum_of_elements(cudaError_t cudaStatus,double* vec,unsigned int size,unsigned int bufferedSize,unsigned int blockSize){
+}
+void CUDA::facet_to_vertex(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart,unsigned int numVert){
+    unsigned int numberOfBlocks = ceil(numVert / (float) blockSize);
+    facetToVertex<<<blockSize,numberOfBlocks>>>(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart);
+    cuda_sync_and_check(cudaStatus,"facet_to_vertex");
+
+}
+
+void CUDA::area_gradient(double * gradAFacet,unsigned int* facets,double * vert,unsigned int numFacets){
+    unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
+    areaGradient<<<blockSize,numberOfBlocks>>>(double* gradAFacet, unsigned int* facets,double* vert,unsigned int numFacets);
+    cuda_sync_and_check(cudaStatus,"GradA");
+
+
+}
+void CUDA::volume_gradient(double * gradVFacet,unsigned int* facets,double * vert,unsigned int numFacets){
+    unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
+    volumeGradient<<<blockSize,numberOfBlocks>>>(double* gradVFacet, unsigned int* facets,double* vert,unsigned int numFacets);
+    cuda_sync_and_check(cudaStatus,"GradV");
+
+}
+
+
+double CUDA::sum_of_elements(double* vec,unsigned int size,unsigned int bufferedSize,unsigned int blockSize){
 
     double out;
 
@@ -249,7 +330,7 @@ double sum_of_elements(cudaError_t cudaStatus,double* vec,unsigned int size,unsi
 
 }
 
-void cuda_sync_and_check(cudaError_t cudaStatus, const char * caller){
+void CUDA::cuda_sync_and_check(const char * caller){
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "Kernel launch failed: %s. From %s\n", cudaGetErrorString(cudaStatus),caller);
@@ -263,7 +344,7 @@ void cuda_sync_and_check(cudaError_t cudaStatus, const char * caller){
     }
 
 }
-double dotProduct(cudaError_t cudaStatus,double * v1, double * v2, double * scratch, unsigned int size, unsigned int blockSize){
+double CUDA::dotProduct(double * v1, double * v2, double * scratch, unsigned int size, unsigned int blockSize){
 
     // first multiply
     unsigned int numberOfBlocks = ceil(size / (float) blockSize);
@@ -282,3 +363,6 @@ double dotProduct(cudaError_t cudaStatus,double * v1, double * v2, double * scra
 
 
 }
+
+
+};

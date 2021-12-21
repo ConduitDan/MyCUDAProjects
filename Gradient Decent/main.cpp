@@ -7,10 +7,10 @@ Save for gradient
 make a factory
 have optimzer call the facotry which switches what kind of DMesh and Grandients it hands out. 
 So we have
-[ ] Figue out make file
+[x] Figue out make file
 [ ] Figure out #ifdef USE_BUILD_X
 [ ] Split mesh
-[ ] split Grandiet
+[x] split Grandiet
 [ ] rewrite kernals
 [ ] make Factory
 [ ] hook up facotry to Optimzier*/

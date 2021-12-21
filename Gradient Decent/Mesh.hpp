@@ -5,26 +5,14 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include "cuda.h"
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+#include <memory>
 #include "Kernals.hpp"
 #include "Gradient.hpp"
 
-// [x] Write DeviceMesh stuff that need to happen on the CPU 
-// [x] write everything around the kernals for device mesh
-// [x] write everything around the kernals for gradient
-// [x] write kernals
-// [x] write the __device__ util functions
-// [x] get the correct size allocation for area and volume vectors (for add tree)
-// [x] write the print for the mesh
-// [x] write the optimizer 
-// [x] write vector dot
-// [x] write vector scale and subtract
-// [x] GLOBAL constraints
-// [x] let meshes constuct via pointer assignment (removes need for freind)
-// [x] reproject
-// [ ] write tests
+//#include "cuda.h"
+//#include "cuda_runtime.h"
+//#include "device_launch_parameters.h"
+
 class Gradient;
 
 
@@ -69,21 +57,26 @@ class DeviceMesh{
 private:
     unsigned int _numVert = 0;
 	unsigned int _numFacets = 0;
-	double* _vert = nullptr;
-	unsigned int* _facets = nullptr;
+
+	DeviceAPI * GPU = CUDA::Instance(); 
+
+	using unique_device_double_ptr = std::unique_ptr<double,decltype(GPU->get_deallocate())>;
+	using unique_device_uint_ptr = std::unique_ptr<unsigned int,decltype(GPU->get_deallocate())>;
+
+	unique_device_double_ptr _vert;
+	unique_device_uint_ptr _facets;
 
 	// arrays holding the map from vertex to <facet, # in facet>
-    unsigned int* _vertToFacet = nullptr; // the a list of facet indcies sorted by vertex
-    unsigned int* _vertIndexStart = nullptr; // where the indcies in vertToFacet start for a vertex 
+    unique_device_uint_ptr _vertToFacet; // the a list of facet indcies sorted by vertex
+    unique_device_uint_ptr _vertIndexStart; // where the indcies in vertToFacet start for a vertex 
 
 
-	double* _area = nullptr; // holds the area per facet
-	//double* _areaSum = nullptr; // array for summing the area per facet
+	unique_device_double_ptr _area; // holds the area per facet
+	
 
-	double* _volume = nullptr; // holds the volume per facet
+	unique_device_double_ptr _volume; // holds the volume per facet
 	//double* _volumeSum = nullptr; // array for summing the volume per facet
 
-	cudaError_t _cudaStatus = cudaSetDevice(0);
 	unsigned int _blockSize;
 	unsigned int _bufferedSize;
 	
@@ -102,13 +95,11 @@ public:
 	unsigned int get_numVert(){ return _numVert; }
 	unsigned int get_numFacets(){ return _numFacets; }
 	unsigned int get_blockSize(){ return _blockSize; }
-	double* get_vert() { return _vert; }
-	unsigned int* get_facets(){ return _facets; }
-	unsigned int* get_vertToFacet(){ return _vertToFacet; }
-	unsigned int* get_vertIndexStart(){ return _vertIndexStart; }
+	double* get_vert() { return _vert.get(); }
+	unsigned int* get_facets(){ return _facets.get(); }
+	unsigned int* get_vertToFacet(){ return _vertToFacet.get(); }
+	unsigned int* get_vertIndexStart(){ return _vertIndexStart.get(); }
 	
-
-
 };
 
 
