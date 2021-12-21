@@ -18,14 +18,18 @@ So we have
 
 int main(int nargs, char** argv){
     // takes in a filename and a number of steps to take
-    
+    try{
     ShapeOptimizer myOptimizer(argv[1]);
     myOptimizer.gradientDesent(atoi(argv[2]));
 
-    myOptimizer.printMesh("hopefullyASphere.mesh");
+    myOptimizer.printMesh("Sphere.mesh");
 
-    return 1;
-
+    return 0;
+    }
+    catch(const char* e){
+        printf("failed with error %s\n",e);
+        return -1;
+    }
 
 
 }

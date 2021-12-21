@@ -227,15 +227,16 @@ double sum_of_elements(cudaError_t cudaStatus,double* vec,unsigned int size,unsi
     unsigned int numberOfBlocks = ceil(size / (float) blockSize / 2.0);
     // printf("AddTree with %d blocks,  of blocks size %d, for %d total elements\n",numberOfBlocks,blockSize,_bufferedSize);
     
-    addTree<<<numberOfBlocks, blockSize, bufferedSize / 2 * sizeof(double) >>> (vec, vec);
+    addTree<<<numberOfBlocks, blockSize, blockSize  * sizeof(double) >>> (vec, vec);
+    cuda_sync_and_check(cudaStatus,"sum of elements");
 
 
     if (numberOfBlocks>1){
         for (int i = numberOfBlocks; i > 1; i /= (blockSize * 2)) {
-            addTree<<<ceil((float)numberOfBlocks/ (blockSize * 2)), blockSize, ceil((float)size / 2)* sizeof(double) >>> (vec, vec);
+            addTree<<<ceil((float)numberOfBlocks/ (blockSize * 2)), blockSize, blockSize * sizeof(double)>>> (vec, vec);
+            cuda_sync_and_check(cudaStatus,"sum of elements");
         } 
     }
-    cuda_sync_and_check(cudaStatus,"sum of elements");
 
     // copy the 0th element out of the vector now that it contains the sum
     cudaStatus = cudaMemcpy(&out, vec,sizeof(double), cudaMemcpyDeviceToHost);
