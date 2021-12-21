@@ -52,7 +52,12 @@ Then we perform the sum in the same manor
 $$\nabla_{\vec{r}_i} V = \sum_{(k,l)_{m_i}} \nabla_{\vec{r}_{f_{k_l}}}V_{f_k}$$
 
 To minimize area with constant volume we project the area gradient vector to the space where the volume change is zero. We call the negative of this projection the force. 
-$$ \vec{F}_i = -\left(\nabla_{\vec{r}_i} A - \frac{\nabla_{\vec{r}_i} A \cdot \nabla_{\vec{r}_i} V}{\nabla_{\vec{r}_i} V \cdot \nabla_{\vec{r}_i} V}\nabla_{\vec{r}_i} V\right)$$
+$$ \vec{F}_i = -\left(\nabla_{\vec{r}_i} A - \frac{\nabla_{\vec{r}} A \cdot \nabla_{\vec{r}} V}{\nabla_{\vec{r}} V \cdot \nabla_{\vec{r}} V}\nabla_{\vec{r}_i} V\right)$$
+Noting here that as this is a global constraint the dot products are computed across every vertex.\\
+
+This only preserves volume to linear order however so we must reproject the verteices onto the global constraint. This is done is done via gradient decent. We first calculate how far off we are from the target volume $\delta V = V_{target}-V_{actual}$. We then recalculate the gradient of the volume for the now moved vertices using the above method. The amount to move the vertices to project onto the constraint of the volume is then
+$$\frac{\delta V}{\nabla V \cdot \nabla V} \nabla V$$
+
 
 Gradient decent then consists of calculating this force and moving the vertices on the mesh until the force is below a threshold value. 
 
