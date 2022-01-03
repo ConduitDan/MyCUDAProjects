@@ -196,7 +196,8 @@ bool Mesh::print(const char* fileName){
 
 
 
-DeviceMesh::DeviceMesh(Mesh* hostMesh, unsigned int blockSize){
+DeviceMesh::DeviceMesh(Mesh* hostMesh, DeviceAPI* GPUin){
+
 
     // copy over the number of elements
     _numFacets = hostMesh->get_numFacets();
@@ -206,10 +207,10 @@ DeviceMesh::DeviceMesh(Mesh* hostMesh, unsigned int blockSize){
     // there should be 3*_numfacets values in the map.
     // we should store a compaion array with the starting index for vertex i in the map
 
-    std::unique_ptr <unsigned int[]> vertToFacet  = new unsigned int [_numFacets * 3] {0};// (store i*3 + j);
+    std::unique_ptr <unsigned int[]> vertToFacet(new unsigned int [_numFacets * 3] {0});// (store i*3 + j);
     //unsigned int *vertToFacetIndex = new unsigned int [_numFacets * 3] {0};
-    std::unique_ptr <unsigned int[]> vertIndexStart = new unsigned int [_numVert+1] {0}; // + one more here so we have[0...numVert] to make logic simpler for first or last ele
-    std::unique_ptr <unsigned int[]> vertCount = new unsigned int [_numVert] {0};
+    std::unique_ptr <unsigned int[]> vertIndexStart(new unsigned int [_numVert+1] {0}); // + one more here so we have[0...numVert] to make logic simpler for first or last ele
+    std::unique_ptr <unsigned int[]> vertCount(new unsigned int [_numVert] {0});
 
     
     unsigned int* hostFacets = hostMesh->get_facets();
@@ -235,30 +236,29 @@ DeviceMesh::DeviceMesh(Mesh* hostMesh, unsigned int blockSize){
     }
 
 
-    _blockSize = blockSize;
+    unsigned int blockSize = _GPU->get_blockSize();
 
 
     _bufferedSize = ceil(_numFacets / (float)( blockSize * 2)) * 2 * blockSize; // for 
 
 
-    void * temp;
-    // Allocate GPU buffers for vertices and facets 
-    _vert.reset(GPU->allocate(_numVert * 3 * sizeof(double)));
-    _facets.reset(GPU->allocate(_numFacets * 3 * sizeof(unsigned int)));
+    // Allocate _GPU buffers for vertices and facets 
+    _vert.allocate(_numVert * 3);
+    _facets.allocate(_numFacets * 3);
     // the map from vertex to the facets its part of
-    _vertToFacet.reset(GPU->allocate(_numFacets * 3 * sizeof(unsigned int)));
-    _vertIndexStart.reset(GPU->allocate((_numVert+1) * sizeof(unsigned int)));
+    _vertToFacet.allocate(_numFacets * 3);
+    _vertIndexStart.allocate(_numVert+1);
     // and the area and volume vectors
-    _area.reset(GPU->allocate(_bufferedSize * 3 * sizeof(double)));
-    _volume.reset(GPU->allocate(_bufferedSize * 3 * sizeof(double)));
+    _area.allocate(_bufferedSize * 3);
+    _volume.allocate(_bufferedSize * 3);
 
     // copy over the vertices and facets
-    GPU->copy_to_device(_vert.get(),           hostMesh->get_vert(),   _numVert * 3 * sizeof(double));
-    GPU->copy_to_device(_facets.get(),         hostMesh->get_facets(), _numFacets * 3 * sizeof(unsigned int));
+    _GPU->copy_to_device(_vert.get(),           hostMesh->get_vert(),   _numVert * 3 * sizeof(double));
+    _GPU->copy_to_device(_facets.get(),         hostMesh->get_facets(), _numFacets * 3 * sizeof(unsigned int));
     
     // and the map for vertex-> facet
-    GPU->copy_to_device(_vertToFacet.get(),    vertToFacet,            _numFacets * 3 * sizeof(unsigned int));
-    GPU->copy_to_device(_vertIndexStart.get(), vertIndexStart,         (_numVert+1) * sizeof(unsigned int));
+    _GPU->copy_to_device(_vertToFacet.get(),    vertToFacet.get(),            _numFacets * 3 * sizeof(unsigned int));
+    _GPU->copy_to_device(_vertIndexStart.get(), vertIndexStart.get(),         (_numVert+1) * sizeof(unsigned int));
 }
 
 
@@ -266,8 +266,8 @@ Mesh DeviceMesh::copy_to_host(){
     //Mesh newMesh;
     double* newVert = new double[_numVert * 3]; // [x0; y0; z0; x1; y1;.... ]
     unsigned int* newFacets =  new unsigned int[_numFacets * 3];// [a0; b0; c0; a1;b1;c1;...]
-    GPU->copy_from_device(newVert, _vert, _numVert * 3 *  sizeof(double));
-    GPU->copy_from_device(newFacets, _facets, _numFacets * 3 *  sizeof(unsigned int));
+    _GPU->copy_to_host(newVert, _vert.get(), _numVert * 3 *  sizeof(double));
+    _GPU->copy_to_host(newFacets, _facets.get(), _numFacets * 3 *  sizeof(unsigned int));
     return Mesh( _numVert, _numFacets,newVert,newFacets);
 
 
@@ -275,32 +275,29 @@ Mesh DeviceMesh::copy_to_host(){
 }
 
 double DeviceMesh::area(){
-    GPU->area(_blockSize,_area, _vert, _facets, _numFacets);
-    return GPU->sum_of_elements(_area , _numFacets size, bufferedSize, _blockSize);
+    _GPU->area(_area.get(), _vert.get(), _facets.get(), _numFacets);
+    return _GPU->sum_of_elements(_area.get(), _numFacets, _bufferedSize);
 }
 
 double DeviceMesh::volume(){
-    GPU->volume(_blockSize,_volume, _vert, _facets, _numFacets);
-    return GPU->sum_of_elements(_volume , _numFacets size, bufferedSize, _blockSize);
+    _GPU->volume(_volume.get(), _vert.get(), _facets.get(), _numFacets);
+    return _GPU->sum_of_elements(_volume.get() , _numFacets, _bufferedSize);
 
 }
 
 
 double* DeviceMesh::check_area_on_facet(){
     
-    GPU->area(_blockSize,_area, _vert, _facets, _numFacets);
+    _GPU->area(_area.get(), _vert.get(), _facets.get(), _numFacets);
     double *areaPerFacet =  new double[_numFacets];
 
-    GPU->copy_from_device(areaPerFacet, _area, _numFacets * sizeof(double))
+    _GPU->copy_to_host(areaPerFacet, _area.get(), _numFacets * sizeof(double));
     return areaPerFacet;
 
 }
 
-
-
-
-void DeviceMeshCUDA::decend_gradient(Gradient *myGrad,double lambda){
+void DeviceMesh::decend_gradient(Gradient *myGrad,double lambda){
     unsigned int numberOfBlocks = ceil(_numVert*3 / (float) _blockSize);
-    GPU->add_with_mult(_vert ,myGrad->get_force(),lambda,_numVert*3)
+    _GPU->add_with_mult(_vert.get() ,myGrad->get_force(),lambda,_numVert*3);
 }
 

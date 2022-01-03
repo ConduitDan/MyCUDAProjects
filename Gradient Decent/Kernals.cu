@@ -6,35 +6,33 @@
 
 // make this thing a singleton
 
-DeviceAPI* DeviceAPI::_instance = nullptr;
-
-DeviceAPI* DeviceAPI::Instance() {
-    if (_instance == nullptr) { // if an instance doesn't exist
-        _instance = new DeviceAPI; // create a new one
+CUDA::CUDA():DeviceAPI(256){
+    _cudaStatus = cudaSetDevice(0);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
     }
-    return _instance; // return the pointer to it
 }
+CUDA::CUDA(int blockSizeIn):DeviceAPI(blockSizeIn){
 
-void CUDA::CUDA(){
-    cudaStatus = cudaSetDevice(0);
+    _cudaStatus = cudaSetDevice(0);
     if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
     }
 }
 
 
-void* CUDA::allocate( unsigned int size){
+void* CUDA::allocate(unsigned int size){
 
     void *tempPTR;
 
-    cudaStatus = cudaMalloc((void**)&tempPTR, size);
-    if (cudaStatus != cudaSuccess) {
+    _cudaStatus = cudaMalloc((void**)&tempPTR, size);
+    if (_cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
     }
     return tempPTR; // unique ptr safe way to to do this I hope;
 }
 void CUDA::deallocate(void* devicePointer){
-    cudaFree(devicePointer)
+    cudaFree(devicePointer);
 }
 
 
@@ -53,7 +51,113 @@ void CUDA::copy_to_host(void * hostPointer, void * devicepointer, unsigned int s
     }
 }
 
+void CUDA::project_force(double* force,double *gradAVert,double * gradVVert, double scale,unsigned int size){
+    unsigned int numberOfBlocks = ceil(size / (float) blockSize);
+    projectForce<<<blockSize,numberOfBlocks>>>(force,gradAVert,gradVVert,scale,size);
+    cuda_sync_and_check("project to force");
 
+}
+void CUDA::facet_to_vertex(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart,unsigned int numVert){
+    unsigned int numberOfBlocks = ceil(numVert / (float) blockSize);
+    facetToVertex<<<blockSize,numberOfBlocks>>>(vertexValue,facetValue,vertToFacet,vertIndexStart,numVert);
+    cuda_sync_and_check("facet_to_vertex");
+
+}
+
+void CUDA::area_gradient(double * gradAFacet,unsigned int* facets,double * vert,unsigned int numFacets){
+    unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
+    areaGradient<<<blockSize,numberOfBlocks>>>(gradAFacet,facets,vert,numFacets);
+    cuda_sync_and_check("GradA");
+
+
+}
+void CUDA::volume_gradient(double * gradVFacet,unsigned int* facets,double * vert,unsigned int numFacets){
+    unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
+    volumeGradient<<<blockSize,numberOfBlocks>>>(gradVFacet, facets, vert, numFacets);
+    cuda_sync_and_check("GradV");
+
+}
+
+
+double CUDA::sum_of_elements(double* vec,unsigned int size,unsigned int bufferedSize){
+
+    double out;
+
+    // do the reduction each step sums blockSize*2 number of elements
+    unsigned int numberOfBlocks = ceil(size / (float) blockSize / 2.0);
+    // printf("AddTree with %d blocks,  of blocks size %d, for %d total elements\n",numberOfBlocks,blockSize,_bufferedSize);
+    
+    addTree<<<numberOfBlocks, blockSize, blockSize  * sizeof(double) >>> (vec, vec);
+    cuda_sync_and_check("sum of elements");
+
+
+    if (numberOfBlocks>1){
+        for (int i = numberOfBlocks; i > 1; i /= (blockSize * 2)) {
+            addTree<<<ceil((float)numberOfBlocks/ (blockSize * 2)), blockSize, blockSize * sizeof(double)>>> (vec, vec);
+            cuda_sync_and_check("sum of elements");
+        } 
+    }
+
+    // copy the 0th element out of the vector now that it contains the sum
+    _cudaStatus = cudaMemcpy(&out, vec,sizeof(double), cudaMemcpyDeviceToHost);
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaMemcpy failed! area\n");
+    throw;
+    }
+
+    return out;
+
+}
+
+void CUDA::cuda_sync_and_check(const char * caller){
+    _cudaStatus = cudaGetLastError();
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Kernel launch failed: %s. From %s\n", cudaGetErrorString(_cudaStatus),caller);
+        throw "Kernel Launch Failure";
+    }
+    // check that the kernal didn't throw an error
+    _cudaStatus = cudaDeviceSynchronize();
+    if (_cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaDeviceSynchronize returned error %s after launching Kernel %s!\n", cudaGetErrorString(_cudaStatus),caller);
+        throw "Kernel Failure";
+    }
+
+}
+double CUDA::dotProduct(double * v1, double * v2, double * scratch, unsigned int size){
+
+    // first multiply
+    unsigned int numberOfBlocks = ceil(size / (float) blockSize);
+
+    elementMultiply<<<numberOfBlocks,blockSize>>>(v1,v2, scratch,size);
+    cuda_sync_and_check("Element Multiply");
+    unsigned int bufferedSize = ceil(size/(2.0*blockSize))*2 *blockSize;
+    //now sum
+    double out = sum_of_elements(scratch,size, bufferedSize);
+    
+    // clear the scratch
+    cudaMemset(scratch,0,sizeof(double)*bufferedSize);
+    cuda_sync_and_check("dotProduct");
+
+    return out;
+
+
+}
+void CUDA::area(double * area, double * vert, unsigned int * facets, unsigned int numFacets){
+    unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
+    areaKernel<<<blockSize,numberOfBlocks>>>(area, vert, facets, numFacets);
+    cuda_sync_and_check("area");
+
+}
+void CUDA::volume(double * volume, double * vert, unsigned int * facets, unsigned int numFacets){
+    unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
+    volumeKernel<<<blockSize,numberOfBlocks>>>(volume, vert, facets, numFacets);
+    cuda_sync_and_check("area");
+
+}
+void CUDA::add_with_mult(double * a,double * b, double lambda, unsigned int size){
+    unsigned int numberOfBlocks = ceil(size / (float) blockSize);
+    addWithMultKernel<<<numberOfBlocks,blockSize>>>(a,b,lambda,size);
+}
 
 
 __device__ void vectorSub(double * v1, double * v2, double * vOut){
@@ -272,97 +376,3 @@ __global__ void elementMultiply(double* v1, double* v2, double* out, unsigned in
 }
 
 
-void CUDA::project_force(double* force,double *gradAVert,double * gradVVert, double scale,unsigned int size){
-    unsigned int numberOfBlocks = ceil(size / (float) blockSize);
-    projectForce<<<blockSize,numberOfBlocks>>>(force,gradAVert,gradVVert,scale,size)
-    cuda_sync_and_check(cudaStatus,"project to force");
-
-}
-void CUDA::facet_to_vertex(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart,unsigned int numVert){
-    unsigned int numberOfBlocks = ceil(numVert / (float) blockSize);
-    facetToVertex<<<blockSize,numberOfBlocks>>>(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart);
-    cuda_sync_and_check(cudaStatus,"facet_to_vertex");
-
-}
-
-void CUDA::area_gradient(double * gradAFacet,unsigned int* facets,double * vert,unsigned int numFacets){
-    unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
-    areaGradient<<<blockSize,numberOfBlocks>>>(double* gradAFacet, unsigned int* facets,double* vert,unsigned int numFacets);
-    cuda_sync_and_check(cudaStatus,"GradA");
-
-
-}
-void CUDA::volume_gradient(double * gradVFacet,unsigned int* facets,double * vert,unsigned int numFacets){
-    unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
-    volumeGradient<<<blockSize,numberOfBlocks>>>(double* gradVFacet, unsigned int* facets,double* vert,unsigned int numFacets);
-    cuda_sync_and_check(cudaStatus,"GradV");
-
-}
-
-
-double CUDA::sum_of_elements(double* vec,unsigned int size,unsigned int bufferedSize,unsigned int blockSize){
-
-    double out;
-
-    // do the reduction each step sums blockSize*2 number of elements
-    unsigned int numberOfBlocks = ceil(size / (float) blockSize / 2.0);
-    // printf("AddTree with %d blocks,  of blocks size %d, for %d total elements\n",numberOfBlocks,blockSize,_bufferedSize);
-    
-    addTree<<<numberOfBlocks, blockSize, blockSize  * sizeof(double) >>> (vec, vec);
-    cuda_sync_and_check(cudaStatus,"sum of elements");
-
-
-    if (numberOfBlocks>1){
-        for (int i = numberOfBlocks; i > 1; i /= (blockSize * 2)) {
-            addTree<<<ceil((float)numberOfBlocks/ (blockSize * 2)), blockSize, blockSize * sizeof(double)>>> (vec, vec);
-            cuda_sync_and_check(cudaStatus,"sum of elements");
-        } 
-    }
-
-    // copy the 0th element out of the vector now that it contains the sum
-    cudaStatus = cudaMemcpy(&out, vec,sizeof(double), cudaMemcpyDeviceToHost);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMemcpy failed! area\n");
-    throw;
-    }
-
-    return out;
-
-}
-
-void CUDA::cuda_sync_and_check(const char * caller){
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "Kernel launch failed: %s. From %s\n", cudaGetErrorString(cudaStatus),caller);
-        throw "Kernel Launch Failure";
-    }
-    // check that the kernal didn't throw an error
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error %s after launching Kernel %s!\n", cudaGetErrorString(cudaStatus),caller);
-        throw "Kernel Failure";
-    }
-
-}
-double CUDA::dotProduct(double * v1, double * v2, double * scratch, unsigned int size, unsigned int blockSize){
-
-    // first multiply
-    unsigned int numberOfBlocks = ceil(size / (float) blockSize);
-
-    elementMultiply<<<numberOfBlocks,blockSize>>>(v1,v2, scratch,size);
-    cuda_sync_and_check(cudaStatus,"Element Multiply");
-    unsigned int bufferedSize = ceil(size/(2.0*blockSize))*2 *blockSize;
-    //now sum
-    double out = sum_of_elements(cudaStatus,scratch,size, bufferedSize,blockSize);
-    
-    // clear the scratch
-    cudaMemset(scratch,0,sizeof(double)*bufferedSize);
-    cuda_sync_and_check(cudaStatus,"dotProduct");
-
-    return out;
-
-
-}
-
-
-};

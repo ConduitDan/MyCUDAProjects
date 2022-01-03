@@ -3,6 +3,7 @@
 #define Gradient_hpp
 
 #include "Mesh.hpp"
+#include "Kernals.hpp"
 #include <memory>
 class DeviceMesh;
 
@@ -10,19 +11,16 @@ class Gradient{
 protected:
 	DeviceMesh *_myMesh;
 
-	DeviceAPI * GPU = CUDA::Instance(); 
+	DeviceAPI *_GPU = new CUDA(); 
 
-	using unique_device_ptr = std::unique_ptr<double,decltype(&(GPU->deallocate))>;
-	unique_device_ptr _gradAFacet;
-	unique_device_ptr _gradAVert;
+	UniqueDevicePtr<double> _gradAFacet = UniqueDevicePtr<double>(_GPU);
+	UniqueDevicePtr<double> _gradAVert = UniqueDevicePtr<double>(_GPU);
 
-	unique_device_ptr _gradVFacet;
-	unique_device_ptr _gradVVert;
+	UniqueDevicePtr<double> _gradVFacet = UniqueDevicePtr<double>(_GPU);
+	UniqueDevicePtr<double> _gradVVert = UniqueDevicePtr<double>(_GPU);
 
-	unique_device_ptr _force;
-	unique_device_ptr _scratch;
-
-
+	UniqueDevicePtr<double> _force = UniqueDevicePtr<double>(_GPU);
+	UniqueDevicePtr<double> _scratch = UniqueDevicePtr<double>(_GPU);
 
 
 	void calc_gradA();

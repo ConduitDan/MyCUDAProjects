@@ -8,30 +8,30 @@
 typedef void (*fptr)(void * devicePointer);
 
 class DeviceAPI{
-private: 
-    static DeviceAPI* _instance; // this holds the pointer to the only instance of this class
-
 protected:
-    DeviceAPI();
-
+    unsigned int blockSize;
 
 public:
-    static DeviceAPI* Instance(); 
-
     virtual void* allocate(unsigned int size) = 0;
     virtual void copy_to_host(void * hostPointer, void * devicepointer, unsigned int size) = 0;
     virtual void copy_to_device(void* devicePointer, void* hostPointer, unsigned int size) = 0;
-    //virtual void deallocate(void* devicePointer) = 0;
-    virtual fptr get_deallocate() = 0;
+    virtual void deallocate(void* devicePointer) = 0;
 
 
-    virtual double sum_of_elements(double* vec,unsigned int size,unsigned int bufferedSize,unsigned int blockSize) = 0;
-    virtual double dotProduct(double * v1, double * v2, double * scratch, unsigned int size, unsigned int blockSize) = 0;
+    virtual double sum_of_elements(double* vec,unsigned int size,unsigned int bufferedSize) = 0;
+    virtual double dotProduct(double * v1, double * v2, double * scratch, unsigned int size) = 0;
     virtual void add_with_mult(double * a,double * b, double lambda, unsigned int size) = 0;//a = a + b* lambda
     virtual void project_force(double* force,double *gradAVert,double * gradVVert, double scale,unsigned int size) = 0;
     virtual void facet_to_vertex(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart,unsigned int numVert) = 0;
     virtual void area_gradient(double * gradAFacet,unsigned int* facets,double * vert,unsigned int numFacets) = 0;
     virtual void volume_gradient(double * gradVFacet,unsigned int* facets,double * vert,unsigned int numFacets) = 0;
+    virtual void area(double * area, double * vert, unsigned int * facets, unsigned int numFacets) = 0;
+    virtual void volume(double * volume, double * vert, unsigned int * facets, unsigned int numFacets) = 0;
+
+    DeviceAPI(unsigned int blockSizeIn){blockSize = blockSizeIn;}
+
+    unsigned int get_blockSize(){return blockSize;}
+
 
 };
 
@@ -39,22 +39,23 @@ public:
 class CUDA: public DeviceAPI{
 
 private:
-    static cudaError_t cudaStatus;
+    cudaError_t _cudaStatus;
 
 
 public:
+    CUDA();
+    CUDA(int blocksize);
     void* allocate(unsigned int size);
     void copy_to_host(void * hostPointer, void * devicepointer, unsigned int size);
     void copy_to_device(void* devicePointer, void* hostPointer, unsigned int size);
-    static void deallocate(void* devicePointer);
-    fptr get_deallocate(){return &deallocate;}
+    void deallocate(void* devicePointer);
 
     // template <unsigned int blockSize> __device__ void warpReduce(volatile double *sdata, unsigned int tid);
     // template <unsigned int blockSize> __global__ void reduce6(double *g_idata,double *g_odata, unsigned int n);
 
     void cuda_sync_and_check(const char * caller);
-    double sum_of_elements(double* vec,unsigned int size,unsigned int bufferedSize,unsigned int blockSize);
-    double dotProduct(double * v1, double * v2, double * scratch, unsigned int size, unsigned int blockSize);
+    double sum_of_elements(double* vec,unsigned int size,unsigned int bufferedSize);
+    double dotProduct(double * v1, double * v2, double * scratch, unsigned int size);
     void add_with_mult(double * a,double * b, double lambda, unsigned int size);//a = a + b* lambda
     
     void project_force(double* force,double *gradAVert,double * gradVVert, double scale,unsigned int size);
@@ -63,7 +64,31 @@ public:
     void area_gradient(double * gradAFacet,unsigned int* facets,double * vert,unsigned int numFacets);
     void volume_gradient(double * gradVFacet,unsigned int* facets,double * vert,unsigned int numFacets);
 
+    void area(double * area, double * vert, unsigned int * facets, unsigned int numFacets);
+    void volume(double * volume, double * vert, unsigned int * facets, unsigned int numFacets);
+
+
 };
+template <typename T>
+class UniqueDevicePtr {
+private:
+    T* _value = nullptr;
+    DeviceAPI* _myDevice;
+public:
+    UniqueDevicePtr(DeviceAPI* apiIn){_myDevice = apiIn;}
+    UniqueDevicePtr(T* ptrIn, DeviceAPI* apiIn){
+        _myDevice = apiIn;
+        _value = ptrIn;
+    }
+
+    ~UniqueDevicePtr(){_myDevice->deallocate(_value);}
+
+    void allocate(int size){_value = (T*) _myDevice->allocate(size * sizeof(T));}
+
+    T* get(){return _value;}
+
+};
+
 
 
 
@@ -85,5 +110,8 @@ public:
     __device__ double dot(double *a, double *b, double *c);
     __device__ double norm(double *a); 
     __device__ int sign(double a);
+
+
+    
 
 #endif

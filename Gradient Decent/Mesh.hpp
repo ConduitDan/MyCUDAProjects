@@ -58,31 +58,24 @@ private:
     unsigned int _numVert = 0;
 	unsigned int _numFacets = 0;
 
-	DeviceAPI * GPU = CUDA::Instance(); 
+	DeviceAPI * _GPU = nullptr; 
 
-	using unique_device_double_ptr = std::unique_ptr<double,decltype(GPU->get_deallocate())>;
-	using unique_device_uint_ptr = std::unique_ptr<unsigned int,decltype(GPU->get_deallocate())>;
-
-	unique_device_double_ptr _vert;
-	unique_device_uint_ptr _facets;
+	
+	UniqueDevicePtr<double> _vert = UniqueDevicePtr<double>(_GPU);
+	UniqueDevicePtr<unsigned> _facets = UniqueDevicePtr<unsigned>(_GPU);
 
 	// arrays holding the map from vertex to <facet, # in facet>
-    unique_device_uint_ptr _vertToFacet; // the a list of facet indcies sorted by vertex
-    unique_device_uint_ptr _vertIndexStart; // where the indcies in vertToFacet start for a vertex 
+	UniqueDevicePtr<unsigned> _vertToFacet = UniqueDevicePtr<unsigned>(_GPU); // the a list of facet indcies sorted by vertex
+	UniqueDevicePtr<unsigned> _vertIndexStart = UniqueDevicePtr<unsigned>(_GPU);// where the indcies in vertToFacet start for a vertex 
 
-
-	unique_device_double_ptr _area; // holds the area per facet
+	UniqueDevicePtr<double> _area = UniqueDevicePtr<double>(_GPU);// holds the area per facet
+	UniqueDevicePtr<double> _volume = UniqueDevicePtr<double>(_GPU);// holds the volume per facet
 	
-
-	unique_device_double_ptr _volume; // holds the volume per facet
-	//double* _volumeSum = nullptr; // array for summing the volume per facet
-
 	unsigned int _blockSize;
 	unsigned int _bufferedSize;
 	
 public:
-	DeviceMesh(Mesh*,unsigned int); //copies a Mesh over to the device 
-	~DeviceMesh();
+	DeviceMesh(Mesh*,DeviceAPI*); //copies a Mesh over to the device 
 
 	Mesh copy_to_host();
 	void decend_gradient(Gradient *,double);
