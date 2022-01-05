@@ -28,6 +28,7 @@ public:
     DeviceAPI(unsigned int blockSizeIn){blockSize = blockSizeIn;}
 
     unsigned int get_blockSize(){return blockSize;}
+	void set_blockSize(unsigned int size){ blockSize = size;}
 
 
 };

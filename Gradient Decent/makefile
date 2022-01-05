@@ -1,7 +1,7 @@
 CC=g++
 NVCC=nvcc
 CFLAGS=-I.
-DEPS = Gradient.hpp Mesh.hpp ShapeOptimizer.hpp Kernals.hpp
+DEPS = Gradient.hpp Mesh.hpp ShapeOptimizer.hpp APIFactory.hpp CUDA_API.hpp OpenCL_API.hpp
 OBJ =  main.o ShapeOptimizer.o Gradient.o Kernals.o Mesh.o
 
 %.o: %.cpp $(DEPS)
@@ -10,7 +10,13 @@ OBJ =  main.o ShapeOptimizer.o Gradient.o Kernals.o Mesh.o
 %.o: %.cu $(DEPS)
 	$(NVCC) -c -o $@ $< $(CFLAGS)
 
-cudamake: main.o ShapeOptimizer.o Gradient.o Kernals.o Mesh.o
+
+openCL:
+	CFLAGS += -l OpenCL
+	$(CC) main.o ShapeOptimizer.o Gradient.o OpenCL_API.o Mesh.o APIFactory.o
+	make clean
+
+cuda: main.o ShapeOptimizer.o Gradient.o CUDA_API.o Mesh.o APIFactory.o
 	$(NVCC) -o opt.out $^
 	make clean
 
@@ -18,11 +24,11 @@ cudamake: main.o ShapeOptimizer.o Gradient.o Kernals.o Mesh.o
 clean:
 	rm -rf *.o
 
-check: Tests.o ShapeOptimizer.o Gradient.o Kernals.o Mesh.o
+check: Tests.o ShapeOptimizer.o Gradient.o CUDA_API.o Mesh.o APIFactory.o
 	$(NVCC) -o test.out $^
 	./test.out
 	make clean
 
 debug: CFLAGS += -DDEBUG -g
-debug: cudamake
+debug: cuda
 

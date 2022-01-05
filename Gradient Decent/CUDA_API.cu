@@ -21,16 +21,6 @@ CUDA::CUDA(int blockSizeIn):DeviceAPI(blockSizeIn){
 }
 
 
-// void* CUDA::allocate(unsigned int size){
-
-//     void *tempPTR;
-
-//     _cudaStatus = cudaMalloc((void**)&tempPTR, size);
-//     if (_cudaStatus != cudaSuccess) {
-//         fprintf(stderr, "cudaMalloc failed!");
-//     }
-//     return tempPTR;
-// }
 
 void CUDA::allocate(void** ptr, unsigned int size){
 
