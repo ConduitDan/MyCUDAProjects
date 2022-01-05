@@ -3,7 +3,7 @@
 #define Gradient_hpp
 
 #include "Mesh.hpp"
-#include "Kernals.hpp"
+#include "DeviceAPI.hpp"
 #include <memory>
 class DeviceMesh;
 
@@ -11,7 +11,7 @@ class Gradient{
 protected:
 	DeviceMesh *_myMesh;
 
-	DeviceAPI *_GPU = new CUDA(); 
+	DeviceAPI *_GPU = nullptr; 
 
 	UniqueDevicePtr<double> _gradAFacet = UniqueDevicePtr<double>(_GPU);
 	UniqueDevicePtr<double> _gradAVert = UniqueDevicePtr<double>(_GPU);
@@ -35,7 +35,7 @@ private:
 
 
 public:
-	Gradient(DeviceMesh *inMesh);
+	Gradient(DeviceMesh *inMesh, DeviceAPI* GPUAPIin);
 	void calc_force();
 	
 	void reproject(double res);

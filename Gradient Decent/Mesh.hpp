@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <memory>
-#include "Kernals.hpp"
+#include "DeviceAPI.hpp"
 #include "Gradient.hpp"
 
 //#include "cuda.h"

@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(cube_to_sphere){
 BOOST_AUTO_TEST_CASE(area){
     //area test
     Mesh square = Mesh("square.mesh");
-    DeviceMesh dSquare = DeviceMesh(&square,128);
+    DeviceMesh dSquare = DeviceMesh(&square,new CUDA(128));
     double area = dSquare.area();
     std::cout<<"Testing area of a square\n";
     BOOST_CHECK (area == 1.0);
@@ -70,9 +70,10 @@ BOOST_AUTO_TEST_CASE(areaGrad){
     double secondEle[14] = { -1, -1, 1, 1, -1, -1, 1, 1, 0, 0, 0, 0, 0, 0};
     double thirdEle[14] = { -1, -1, -1, -1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0};
     
+	DeviceAPI* GPU_API = new CUDA(128);
     Mesh myMesh = Mesh("cube.mesh");
-    DeviceMesh myDMesh = DeviceMesh(&myMesh,128);
-    Gradient myGrad = Gradient(&myDMesh);
+    DeviceMesh myDMesh = DeviceMesh(&myMesh,GPU_API);
+    Gradient myGrad = Gradient(&myDMesh,GPU_API);
     myGrad.calc_force();
 
     double * gradA = new double[14*3];
@@ -100,9 +101,10 @@ BOOST_AUTO_TEST_CASE(volumeGrad){
     double secondEle[14] = { -0.166667, -0.166667, 0.166667, 0.166667, -0.166667, -0.166667, 0.166667, 0.166667, 0, 0, -0.333333, 0.333333, 0, 0 };
     double thirdEle[14] = { -0.166667, -0.166667, -0.166667, -0.166667, 0.166667, 0.166667, 0.166667, 0.166667, -0.333333, 0.333333, 0, 0, 0, 0 };
     
+	DeviceAPI* GPU_API = new CUDA(128);
     Mesh myMesh = Mesh("cube.mesh");
-    DeviceMesh myDMesh = DeviceMesh(&myMesh,128);
-    Gradient myGrad = Gradient(&myDMesh);
+    DeviceMesh myDMesh = DeviceMesh(&myMesh,GPU_API);
+    Gradient myGrad = Gradient(&myDMesh,GPU_API);
     myGrad.calc_force();
 
     double * gradV = new double[14*3];
@@ -152,7 +154,7 @@ BOOST_AUTO_TEST_CASE(face_to_vertex){
     
     // create a mesh from it and then put it on the GPU
     Mesh myMesh = Mesh(numVert,numFace,vert,faces);
-    DeviceMesh myDMesh = DeviceMesh(&myMesh,blockSize);
+    DeviceMesh myDMesh = DeviceMesh(&myMesh,new CUDA(blockSize));
     // check that the maps are create correctly
 
     unsigned int *vertToFacet = new unsigned int[numFace * 3] ;
@@ -245,10 +247,11 @@ BOOST_AUTO_TEST_CASE(project_force){
 
     double tol = 1e-4;
 
-
+	DeviceAPI* GPU_API = new CUDA(128);
     Mesh myMesh = Mesh("cube.mesh");
-    DeviceMesh myDMesh = DeviceMesh(&myMesh,128);
-    Gradient myGrad = Gradient(&myDMesh);
+    DeviceMesh myDMesh = DeviceMesh(&myMesh,GPU_API);
+    Gradient myGrad = Gradient(&myDMesh,GPU_API);
+
     myGrad.calc_force();
 
     double * force = new double[14*3];

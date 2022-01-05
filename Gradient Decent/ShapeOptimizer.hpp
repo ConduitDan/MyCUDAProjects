@@ -6,6 +6,8 @@
 
 #include "Mesh.hpp"
 #include "Gradient.hpp"
+#include "CUDA_API.hpp"
+
 
 class ShapeOptimizer
 {

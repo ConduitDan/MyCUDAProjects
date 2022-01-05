@@ -11,14 +11,18 @@ OBJ =  main.o ShapeOptimizer.o Gradient.o Kernals.o Mesh.o
 	$(NVCC) -c -o $@ $< $(CFLAGS)
 
 cudamake: main.o ShapeOptimizer.o Gradient.o Kernals.o Mesh.o
-    $(NVCC) -o optimizer.out $^
-    make clean;
+	$(NVCC) -o opt.out $^
+	make clean
 
 .PHONY: clean
 clean:
-    rm -rf *.o
+	rm -rf *.o
 
 check: Tests.o ShapeOptimizer.o Gradient.o Kernals.o Mesh.o
 	$(NVCC) -o test.out $^
 	./test.out
 	make clean
+
+debug: CFLAGS += -DDEBUG -g
+debug: cudamake
+

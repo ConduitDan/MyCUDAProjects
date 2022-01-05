@@ -1,9 +1,22 @@
 #include "Gradient.hpp"
 
-Gradient::Gradient(DeviceMesh *inMesh){
-    _myMesh = inMesh;
+Gradient::Gradient(DeviceMesh *inMesh, DeviceAPI* GPUAPIin){
+
+	_GPU = GPUAPIin;
+    
+	_myMesh = inMesh;
     unsigned int numVert = _myMesh->get_numVert();
     unsigned int numFacet = _myMesh->get_numFacets();
+
+
+	_gradAFacet = UniqueDevicePtr<double>(_GPU);
+	_gradAVert = UniqueDevicePtr<double>(_GPU);
+
+	_gradVFacet = UniqueDevicePtr<double>(_GPU);
+	_gradVVert = UniqueDevicePtr<double>(_GPU);
+
+	_force = UniqueDevicePtr<double>(_GPU);
+	_scratch = UniqueDevicePtr<double>(_GPU);
 
 
     _gradAFacet.allocate(numFacet * 3 * 3);
@@ -13,7 +26,7 @@ Gradient::Gradient(DeviceMesh *inMesh){
     _force.allocate(numVert * 3 * 3);
     // the scratc vector is used as scrach for taking the dot products for projection,
     // so it needs to be padded to a multiple of twice the block size so we can effiecntly sum it
-    unsigned int bufferedSize = ceil(numVert * 3 /(2.0*_myMesh->get_blockSize()))*2*_myMesh->get_blockSize();
+    unsigned int bufferedSize = ceil(numVert * 3 /(2.0*_GPU->get_blockSize()))*2*_GPU->get_blockSize();
     _scratch.allocate(bufferedSize);
 }
 
@@ -26,14 +39,14 @@ void Gradient::calc_force(){
 void Gradient::calc_gradA(){
     // first calculate the gradient on the facets
     _GPU->area_gradient(_gradAFacet.get(),_myMesh->get_facets(),_myMesh->get_vert(),_myMesh->get_numFacets());
-    _GPU->facet_to_vertex(_gradAFacet.get(),_gradAVert.get(),_myMesh->get_vertToFacet(),_myMesh->get_vertIndexStart(),_myMesh->get_numVert());
+    _GPU->facet_to_vertex(_gradAVert.get(),_gradAFacet.get(),_myMesh->get_vertToFacet(),_myMesh->get_vertIndexStart(),_myMesh->get_numVert());
 
 }
 
 void Gradient::calc_gradV(){
     // first calculate the gradient on the facets
     _GPU->volume_gradient(_gradVFacet.get(),_myMesh->get_facets(),_myMesh->get_vert(),_myMesh->get_numFacets());
-    _GPU->facet_to_vertex(_gradVFacet.get(),_gradVVert.get(),_myMesh->get_vertToFacet(),_myMesh->get_vertIndexStart(),_myMesh->get_numVert());
+    _GPU->facet_to_vertex(_gradVVert.get(),_gradVFacet.get(),_myMesh->get_vertToFacet(),_myMesh->get_vertIndexStart(),_myMesh->get_numVert());
 
 }
 void Gradient::project_to_force(){

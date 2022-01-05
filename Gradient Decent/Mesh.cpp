@@ -198,6 +198,21 @@ bool Mesh::print(const char* fileName){
 
 DeviceMesh::DeviceMesh(Mesh* hostMesh, DeviceAPI* GPUin){
 
+	_GPU = GPUin;
+	// tell the device pointers what API to use
+	_vert = UniqueDevicePtr<double>(_GPU);
+	_facets = UniqueDevicePtr<unsigned>(_GPU);
+
+	// arrays holding the map from vertex to <facet, # in facet>
+	_vertToFacet = UniqueDevicePtr<unsigned>(_GPU); // the a list of facet indcies sorted by vertex
+	_vertIndexStart = UniqueDevicePtr<unsigned>(_GPU);// where the indcies in vertToFacet start for a vertex 
+
+	_area = UniqueDevicePtr<double>(_GPU);// holds the area per facet
+	_volume = UniqueDevicePtr<double>(_GPU);// holds the volume per facet
+
+
+
+
 
     // copy over the number of elements
     _numFacets = hostMesh->get_numFacets();
@@ -256,6 +271,7 @@ DeviceMesh::DeviceMesh(Mesh* hostMesh, DeviceAPI* GPUin){
     _GPU->copy_to_device(_vert.get(),           hostMesh->get_vert(),   _numVert * 3 * sizeof(double));
     _GPU->copy_to_device(_facets.get(),         hostMesh->get_facets(), _numFacets * 3 * sizeof(unsigned int));
     
+	// COPYING UNSIGNED INTS TO THE DEVICE ISN'T WORKING or maybe copying back isn't? ( area works?)
     // and the map for vertex-> facet
     _GPU->copy_to_device(_vertToFacet.get(),    vertToFacet.get(),            _numFacets * 3 * sizeof(unsigned int));
     _GPU->copy_to_device(_vertIndexStart.get(), vertIndexStart.get(),         (_numVert+1) * sizeof(unsigned int));

@@ -5,7 +5,7 @@ ShapeOptimizer::ShapeOptimizer(const char * fileName)
     _GPU = new CUDA(256);
     _mesh = new Mesh(fileName);
     _DMesh = new DeviceMesh(_mesh,_GPU);
-    _gradient = new Gradient(_DMesh);
+    _gradient = new Gradient(_DMesh,_GPU);
     _startingVol = _DMesh->volume();
 
 }

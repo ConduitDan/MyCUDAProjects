@@ -9,7 +9,7 @@ have optimzer call the facotry which switches what kind of DMesh and Grandients 
 So we have
 [x] Figue out make file
 [ ] Figure out #ifdef USE_BUILD_X
-[ ] Split mesh
+[x] Split mesh
 [x] split Grandiet
 [ ] rewrite kernals
 [ ] make Factory
