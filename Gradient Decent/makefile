@@ -24,8 +24,8 @@ cuda: main.o ShapeOptimizer.o Gradient.o CUDA_API.o Mesh.o APIFactory.o
 clean:
 	rm -rf *.o
 
-check: Tests.o ShapeOptimizer.o Gradient.o CUDA_API.o Mesh.o APIFactory.o
-	$(NVCC) -o test.out $^
+check: CUDATests.o ShapeOptimizer.o Gradient.o CUDA_API.o Mesh.o APIFactory.o
+	$(NVCC) -g -o test.out $^
 	./test.out
 	make clean
 

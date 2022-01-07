@@ -291,20 +291,20 @@ Mesh DeviceMesh::copy_to_host(){
 }
 
 double DeviceMesh::area(){
-    _GPU->area(_area.get(), _vert.get(), _facets.get(), _numFacets);
-    return _GPU->sum_of_elements(_area.get(), _numFacets, _bufferedSize);
+    _GPU->area(&_area, &_vert, &_facets, _numFacets);
+    return _GPU->sum_of_elements(&_area, _numFacets, _bufferedSize);
 }
 
 double DeviceMesh::volume(){
-    _GPU->volume(_volume.get(), _vert.get(), _facets.get(), _numFacets);
-    return _GPU->sum_of_elements(_volume.get() , _numFacets, _bufferedSize);
+    _GPU->volume(&_volume, &_vert, &_facets, _numFacets);
+    return _GPU->sum_of_elements(&_volume , _numFacets, _bufferedSize);
 
 }
 
 
 double* DeviceMesh::check_area_on_facet(){
     
-    _GPU->area(_area.get(), _vert.get(), _facets.get(), _numFacets);
+    _GPU->area(&_area, &_vert, &_facets, _numFacets);
     double *areaPerFacet =  new double[_numFacets];
 
     _GPU->copy_to_host(areaPerFacet, _area.get(), _numFacets * sizeof(double));
@@ -314,6 +314,6 @@ double* DeviceMesh::check_area_on_facet(){
 
 void DeviceMesh::decend_gradient(Gradient *myGrad,double lambda){
     unsigned int numberOfBlocks = ceil(_numVert*3 / (float) _blockSize);
-    _GPU->add_with_mult(_vert.get() ,myGrad->get_force(),lambda,_numVert*3);
+    _GPU->add_with_mult(&_vert, myGrad->get_force(),lambda,_numVert*3);
 }
 

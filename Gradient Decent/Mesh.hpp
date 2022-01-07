@@ -83,15 +83,14 @@ public:
 	double volume();
 	double area();
 	double* check_area_on_facet();
-	
 
 	unsigned int get_numVert(){ return _numVert; }
 	unsigned int get_numFacets(){ return _numFacets; }
 	unsigned int get_blockSize(){ return _blockSize; }
-	double* get_vert() { return _vert.get(); }
-	unsigned int* get_facets(){ return _facets.get(); }
-	unsigned int* get_vertToFacet(){ return _vertToFacet.get(); }
-	unsigned int* get_vertIndexStart(){ return _vertIndexStart.get(); }
+	UniqueDevicePtr<double>* get_vert() { return &_vert; }
+	UniqueDevicePtr<unsigned int>* get_facets(){ return &_facets; }
+	UniqueDevicePtr<unsigned int>* get_vertToFacet(){ return &_vertToFacet; }
+	UniqueDevicePtr<unsigned int>* get_vertIndexStart(){ return &_vertIndexStart; }
 	
 };
 

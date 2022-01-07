@@ -8,12 +8,12 @@ make a factory
 have optimzer call the facotry which switches what kind of DMesh and Grandients it hands out. 
 So we have
 [x] Figue out make file
-[ ] Figure out #ifdef USE_BUILD_X
+[x] Figure out #ifdef USE_BUILD_X
 [x] Split mesh
 [x] split Grandiet
 [ ] rewrite kernals
-[ ] make Factory
-[ ] hook up facotry to Optimzier*/
+[x] make Factory
+[x] hook up facotry to Optimzier*/
 
 
 int main(int nargs, char** argv){

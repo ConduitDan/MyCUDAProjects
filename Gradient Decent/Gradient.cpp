@@ -38,21 +38,21 @@ void Gradient::calc_force(){
 
 void Gradient::calc_gradA(){
     // first calculate the gradient on the facets
-    _GPU->area_gradient(_gradAFacet.get(),_myMesh->get_facets(),_myMesh->get_vert(),_myMesh->get_numFacets());
-    _GPU->facet_to_vertex(_gradAVert.get(),_gradAFacet.get(),_myMesh->get_vertToFacet(),_myMesh->get_vertIndexStart(),_myMesh->get_numVert());
+    _GPU->area_gradient(&_gradAFacet,_myMesh->get_facets(),_myMesh->get_vert(),_myMesh->get_numFacets());
+    _GPU->facet_to_vertex(&_gradAVert,&_gradAFacet,_myMesh->get_vertToFacet(),_myMesh->get_vertIndexStart(),_myMesh->get_numVert());
 
 }
 
 void Gradient::calc_gradV(){
     // first calculate the gradient on the facets
-    _GPU->volume_gradient(_gradVFacet.get(),_myMesh->get_facets(),_myMesh->get_vert(),_myMesh->get_numFacets());
-    _GPU->facet_to_vertex(_gradVVert.get(),_gradVFacet.get(),_myMesh->get_vertToFacet(),_myMesh->get_vertIndexStart(),_myMesh->get_numVert());
+    _GPU->volume_gradient(&_gradVFacet,_myMesh->get_facets(),_myMesh->get_vert(),_myMesh->get_numFacets());
+    _GPU->facet_to_vertex(&_gradVVert,&_gradVFacet,_myMesh->get_vertToFacet(),_myMesh->get_vertIndexStart(),_myMesh->get_numVert());
 
 }
 void Gradient::project_to_force(){
-    double numerator = _GPU->dotProduct(_gradAVert.get(),_gradVVert.get(),_scratch.get(),_myMesh->get_numVert() * 3);
-    double denominator = _GPU->dotProduct(_gradVVert.get(),_gradVVert.get(),_scratch.get(),_myMesh->get_numVert() * 3 );
-    _GPU->project_force(_force.get(),_gradAVert.get(),_gradVVert.get(),numerator/abs(denominator),_myMesh->get_numVert() * 3);
+    double numerator = _GPU->dotProduct(&_gradAVert,&_gradVVert,&_scratch,_myMesh->get_numVert() * 3);
+    double denominator = _GPU->dotProduct(&_gradVVert,&_gradVVert,&_scratch,_myMesh->get_numVert() * 3 );
+    _GPU->project_force(&_force,&_gradAVert,&_gradVVert,numerator/abs(denominator),_myMesh->get_numVert() * 3);
     
 }
 
@@ -60,10 +60,10 @@ void Gradient::reproject(double res){
     calc_gradV();
     // do the force inner product
 
-    double m = _GPU->dotProduct(_gradVVert.get(),_gradVVert.get(),_scratch.get(),_myMesh->get_numVert()*3);
+    double m = _GPU->dotProduct(&_gradVVert,&_gradVVert,&_scratch,_myMesh->get_numVert()*3);
     double sol = res/m;
     //move and scale (scale = sol, dir = gradV)
-    _GPU->add_with_mult(_myMesh->get_vert(),_gradVVert.get(),sol,_myMesh->get_numVert()*3);
+    _GPU->add_with_mult(_myMesh->get_vert(),&_gradVVert,sol,_myMesh->get_numVert()*3);
     
 
 }

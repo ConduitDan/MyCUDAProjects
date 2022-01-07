@@ -28,19 +28,19 @@ public:
     // template <unsigned int blockSize> __global__ void reduce6(double *g_idata,double *g_odata, unsigned int n);
 
     void cuda_sync_and_check(const char * caller);
-    double sum_of_elements(double* vec,unsigned int size,unsigned int bufferedSize);
-    double dotProduct(double * v1, double * v2, double * scratch, unsigned int size);
-    void add_with_mult(double * a,double * b, double lambda, unsigned int size);//a = a + b* lambda
+
+	double sum_of_elements(UniqueDevicePtr<double>* vec,unsigned int size,unsigned int bufferedSize);
+    double dotProduct(UniqueDevicePtr<double>* v1, UniqueDevicePtr<double>* v2, UniqueDevicePtr<double>* scratch, unsigned int size);
+    void add_with_mult(UniqueDevicePtr<double>* a,UniqueDevicePtr<double>* b, double lambda, unsigned int size);//a = a + b* lambda
     
-    void project_force(double* force,double *gradAVert,double * gradVVert, double scale,unsigned int size);
-    void facet_to_vertex(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart,unsigned int numVert);
-
-    void area_gradient(double * gradAFacet,unsigned int* facets,double * vert,unsigned int numFacets);
-    void volume_gradient(double * gradVFacet,unsigned int* facets,double * vert,unsigned int numFacets);
-
-    void area(double * area, double * vert, unsigned int * facets, unsigned int numFacets);
-    void volume(double * volume, double * vert, unsigned int * facets, unsigned int numFacets);
-
+	void project_force(UniqueDevicePtr<double>* force,UniqueDevicePtr<double>* gradAVert,UniqueDevicePtr<double>* gradVVert, double scale,unsigned int size);
+    void facet_to_vertex(UniqueDevicePtr<double>* vertexValue, UniqueDevicePtr<double>* facetValue,UniqueDevicePtr<unsigned int>* vertToFacet, UniqueDevicePtr<unsigned int>* vertIndexStart,unsigned int numVert);
+    
+	void area_gradient(UniqueDevicePtr<double>* gradAFacet,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets);
+    void volume_gradient(UniqueDevicePtr<double>* gradVFacet,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets);
+    
+	void area(UniqueDevicePtr<double>* area, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets);
+    void volume(UniqueDevicePtr<double>* volume, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets);
 
 };
 

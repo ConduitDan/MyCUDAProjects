@@ -41,9 +41,9 @@ public:
 	void reproject(double res);
 
 
-	double* get_gradA(){return _gradAVert.get();}
-	double* get_gradV(){return _gradVVert.get();}
-	double* get_force(){return _force.get();}
+	UniqueDevicePtr<double> *get_gradA(){return &_gradAVert;}
+	UniqueDevicePtr<double> *get_gradV(){return &_gradVVert;}
+	UniqueDevicePtr<double> *get_force(){return &_force;}
 };
 
 
