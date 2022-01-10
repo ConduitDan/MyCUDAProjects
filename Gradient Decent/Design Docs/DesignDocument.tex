@@ -62,7 +62,11 @@ $$\frac{\delta V}{\nabla V \cdot \nabla V} \nabla V$$
 Gradient decent then consists of calculating this force and moving the vertices on the mesh until the force is below a threshold value. 
 
 \section{Implementation Method}
-First pass of this will be done in C++ using CUDA for GPU acceleration Class stucture is below
+This implementation works for CUDA and OpenCL. This is done though the use a Bridge and a unique pointer UniqueDevicePointer class.
+
+The bridge used here is the Device\_API class that defines a unified API for interacting with the GPU. A pointer to this class is passed out by a Factory that knows which subclass to used based on the complier selected. The concrete classes CUDA\_API and OpenCL\_API define the spesific operations for their respective frameworks.
+
+The UniqueDevicePointer class holds the memory location of data on the GPU and knows how to allocate that memory and automatically frees it once the it falls out of scope. This is a template class that knows the data type of the information it points to for ease of allocation and to ensure type safety. To account for the difference between CUDA (Device Pointers are <T>*) and OpenCL (Device pointers are of type cl\_mem) the memory location is held as a void*.
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=1\linewidth]{Classes}
