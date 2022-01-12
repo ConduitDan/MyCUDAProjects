@@ -5,6 +5,7 @@
 #include "cuda.h"
 #include "cuda_runtime.h"
 #include <stdio.h> 
+#include "kernalfile.hpp"
 
 
 class CUDA: public DeviceAPI{
@@ -58,14 +59,14 @@ public:
     __global__ void projectForce(double* force,double* gradAVert,double* gradVVert,double scale,unsigned int numEle);
     __global__ void elementMultiply(double* v1, double* v2, double* out, unsigned int size);
 
-    __device__ void vectorSub(double * v1, double * v2, double * vOut);
-    __device__ void vectorAdd(double * v1, double * v2, double * vOut);
-    __device__ void vecScale(double *v, double lambda);
-    __device__ void vecAssign(double *out, double *in,double lambda); // out  = in*lambda
-    __device__ void cross(double *a,double *b, double *c);
-    __device__ double dot(double *a, double *b, double *c);
-    __device__ double norm(double *a); 
-    __device__ int sign(double a);
+    // __device__ void vectorSub(double * v1, double * v2, double * vOut);
+    // __device__ void vectorAdd(double * v1, double * v2, double * vOut);
+    // __device__ void vecScale(double *v, double lambda);
+    // __device__ void vecAssign(double *out, double *in,double lambda); // out  = in*lambda
+    // __device__ void cross(double *a,double *b, double *c);
+    // __device__ double dot(double *a, double *b, double *c);
+    // __device__ double norm(double *a); 
+    // __device__ int sign(double a);
 
 
     

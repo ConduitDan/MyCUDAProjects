@@ -1,30 +1,32 @@
 CC=g++
 NVCC=nvcc
 CFLAGS=-I.
-DEPS = Gradient.hpp Mesh.hpp ShapeOptimizer.hpp APIFactory.hpp CUDA_API.hpp OpenCL_API.hpp
+DEPS = Gradient.hpp Mesh.hpp ShapeOptimizer.hpp APIFactory.hpp CUDA_API.hpp OpenCL_API.hpp kernalfile.hpp
 OBJ =  main.o ShapeOptimizer.o Gradient.o Kernals.o Mesh.o
 
 %.o: %.cpp $(DEPS)
-	$(NVCC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS) $(LDFLAGS)
 
 %.o: %.cu $(DEPS)
-	$(NVCC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
-
-openCL:
-	CFLAGS += -l OpenCL
-	$(CC) main.o ShapeOptimizer.o Gradient.o OpenCL_API.o Mesh.o APIFactory.o
+openCL: LDFLAGS += -l OpenCL
+openCL: main.o ShapeOptimizer.o Gradient.o OpenCL_API.o Mesh.o APIFactory.o kernalfile.o
+	CC = g++
+	$(CC) -o opt.out $^ $(LDFLAGS)
 	make clean
 
-cuda: main.o ShapeOptimizer.o Gradient.o CUDA_API.o Mesh.o APIFactory.o
-	$(NVCC) -o opt.out $^
-	make clean
 
 .PHONY: clean
 clean:
 	rm -rf *.o
 
-check: CUDATests.o ShapeOptimizer.o Gradient.o CUDA_API.o Mesh.o APIFactory.o
+cuda: main.o ShapeOptimizer.o Gradient.o CUDA_API.o Mesh.o APIFactory.o kernalfile.o
+	CC = nvcc
+	$(CC) -o opt.out $^
+	make clean
+
+check: CUDATests.o ShapeOptimizer.o Gradient.o CUDA_API.o Mesh.o APIFactory.o kernalfile.o
 	$(NVCC) -g -o test.out $^
 	./test.out
 	make clean

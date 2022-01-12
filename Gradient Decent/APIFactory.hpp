@@ -11,8 +11,8 @@
 #include "CUDA_API.hpp"
 #define API CUDA
 
-#elif defined __OPENCL_VERSION__
-
+#elif 1
+//defined __OPENCL_VERSION__
 #include "OpenCL_API.hpp"
 #define API OpenCL
 

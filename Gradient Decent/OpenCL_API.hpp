@@ -2,10 +2,49 @@
 #ifndef OpenCL_API_hpp
 #define OpenCL_API_hpp
 
+
+#define PROGRAM_LIST {"areaKernel",\
+						"volumeKernel",\
+						"addTree",\
+						"addWithMultKernel",\
+						"areaGradient",\
+						"volumeGradient",\
+						"facetToVertex",\
+						"projectForce",\
+						"elementMultiply"}
+
+#define PROGRAM_LIST_VAR {areaKernelSTR,\
+						volumeKernelSTR,\
+						addTreeSTR,\
+						addWithMultKernelSTR,\
+						areaGradientSTR,\
+						volumeGradientSTR,\
+						facetToVertexSTR,\
+						projectForceSTR,\
+						elementMultiplySTR}
+
+#define AREA 0
+#define VOLUME 1
+#define ADDTREE 2
+#define ADDWITHMULT 3
+#define AREAGRAD 4
+#define VOLUMEGRAD 5
+#define FACETTOVERTEX 6
+#define PROJECTFORCE 7
+#define ELEMENTMULT 8
+
+#define NUMBER_OF_PROGRAMS 9
+
+
+
 #define __CL_ENABLE_EXCEPTIONS
 #include "DeviceAPI.hpp"
 #include "CL/cl.h"
+#include "kernalfile.hpp"
 #include <stdio.h> 
+#include <math.h>
+
+
 
 
 
@@ -13,16 +52,27 @@ class OpenCL: public DeviceAPI{
 
 private:
     int error;
-	cl_device_id device_id;             // compute device id 
-    cl_context context;                 // compute context
-    cl_command_queue commands;          // compute command queue
-    cl_program program;                 // compute program
-    cl_kernel kernel;                   // compute kernel
-    
-    cl_mem input;                       // device memory used for the input array
-    cl_mem output;                      // device memory used for the output array
-	void setup();
+	cl_device_id device_id;             		// compute device id 
+    cl_context context;                 		// compute context
+    cl_command_queue commands;          		// compute command queue
+    cl_program program_list[NUMBER_OF_PROGRAMS];// compute program
+	cl_kernel kernel_list[NUMBER_OF_PROGRAMS];	// compute kernel
+	const char* programNames[NUMBER_OF_PROGRAMS] = PROGRAM_LIST;
+	const char* programVarNames[NUMBER_OF_PROGRAMS] = {};
+	/*{areaKernelSTR,\
+						volumeKernelSTR,\
+						addTreeSTR,\
+						addWithMultKernelSTR,\
+						areaGradientSTR,\
+						volumeGradientSTR,\
+						facetToVertexSTR,\
+						projectForceSTR,\
+						elementMultiplySTR};*/
 
+
+    
+	void setup();
+	void one_add_tree(UniqueDevicePtr<double>* vec,size_t local, size_t global);
 
 public:
     OpenCL();
@@ -35,21 +85,18 @@ public:
 	double getGPUElement(double * vec, unsigned int index);
 	unsigned int getGPUElement(unsigned int * vec, unsigned int index);
 
-
-    void cuda_sync_and_check(const char * caller);
-
-    double sum_of_elements(double* vec,unsigned int size,unsigned int bufferedSize);
-    double dotProduct(double * v1, double * v2, double * scratch, unsigned int size);
-    void add_with_mult(double * a,double * b, double lambda, unsigned int size);//a = a + b* lambda
+	double sum_of_elements(UniqueDevicePtr<double>* vec,unsigned int size,unsigned int bufferedSize);
+    double dotProduct(UniqueDevicePtr<double>* v1, UniqueDevicePtr<double>* v2, UniqueDevicePtr<double>* scratch, unsigned int size);
+    void add_with_mult(UniqueDevicePtr<double>* a,UniqueDevicePtr<double>* b, double lambda, unsigned int size);//a = a + b* lambda
     
-    void project_force(double* force,double *gradAVert,double * gradVVert, double scale,unsigned int size);
-    void facet_to_vertex(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart,unsigned int numVert);
-
-    void area_gradient(double * gradAFacet,unsigned int* facets,double * vert,unsigned int numFacets);
-    void volume_gradient(double * gradVFacet,unsigned int* facets,double * vert,unsigned int numFacets);
-
-    void area(double * area, double * vert, unsigned int * facets, unsigned int numFacets);
-    void volume(double * volume, double * vert, unsigned int * facets, unsigned int numFacets);
+	void project_force(UniqueDevicePtr<double>* force,UniqueDevicePtr<double>* gradAVert,UniqueDevicePtr<double>* gradVVert, double scale,unsigned int size);
+    void facet_to_vertex(UniqueDevicePtr<double>* vertexValue, UniqueDevicePtr<double>* facetValue,UniqueDevicePtr<unsigned int>* vertToFacet, UniqueDevicePtr<unsigned int>* vertIndexStart,unsigned int numVert);
+    
+	void area_gradient(UniqueDevicePtr<double>* gradAFacet,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets);
+    void volume_gradient(UniqueDevicePtr<double>* gradVFacet,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets);
+    
+	void area(UniqueDevicePtr<double>* area, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets);
+    void volume(UniqueDevicePtr<double>* volume, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets);
 
 
 };
