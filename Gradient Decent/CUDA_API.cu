@@ -84,15 +84,7 @@ void CUDA::area_gradient(UniqueDevicePtr<double>* gradAFacet,UniqueDevicePtr<uns
 
 
 }
-void CUDA::area_gradientVert(UniqueDevicePtr<double>* gradAVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert){
-    unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
-	memset(gradAVert->get(),0,numVert*3*sizeof(double));
-	cuda_sync_and_check("memset");
-    areaGradientVert<<<numberOfBlocks, blockSize>>>((double*)gradAVert->get(),(unsigned int*)facets->get(),(double*)vert->get(),numFacets);
-    cuda_sync_and_check("GradA");
 
-
-}
 void CUDA::volume_gradient(UniqueDevicePtr<double>* gradVFacet,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets){
     unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
     volumeGradient<<<numberOfBlocks, blockSize>>>((double*)gradVFacet->get(), (unsigned int*)facets->get(), (double*)vert->get(), numFacets);
@@ -248,26 +240,6 @@ __device__ int sign(double a){
     else return 0;
 }
 
-__device__ double atomicAdd(double* address, double val)
-{
-    unsigned long long int* address_as_ull =
-                             (unsigned long long int*)address;
-    unsigned long long int old = *address_as_ull, assumed;
-    do {
-        assumed = old;
-old = atomicCAS(address_as_ull, assumed,
-                        __double_as_longlong(val +
-                               __longlong_as_double(assumed)));
-    } while (assumed != old);
-    return __longlong_as_double(old);
-}
-
-__device__ void vecAtomicAdd(double*a, double*b,double scale){
-	atomicAdd(a,scale*(*b));
-	atomicAdd(a+1,scale*(*(b+1)));
-	atomicAdd(a+2,scale*(*(b+2)));
-	
-}
 
 
 __global__ void areaKernel(double * area, double * vert, unsigned int * facets, unsigned int numFacets){
@@ -393,43 +365,7 @@ __global__ void areaGradient(double* gradAFacet, unsigned int* facets,double* ve
 
 }
 
-__global__ void areaGradientVert(double* gradAVert, unsigned int* facets,double* verts,unsigned int numFacets){
-    int i = blockDim.x * blockIdx.x + threadIdx.x;
 
-    double S0[3];
-    double S1[3];
-    double S01[3];
-    double S010[3];
-    double S011[3];
-	double v0[3];
-	double v1[3];
-	double v2[3];
-    if (i<numFacets){
-        vectorSub(&verts[facets[i*3+1]*3], &verts[facets[i*3]*3],S0);
-        vectorSub(&verts[facets[i*3+2]*3], &verts[facets[i*3+1]*3],S1);
-        cross(S0,S1,S01);
-        cross(S01,S0,S010);
-        cross(S01,S1,S011);
-        // each facet has 3 vertices with gradient each, so in total 9 numbers we write them down here;
-        
-        // or facet i this is the gradent vector for its 0th vertex 
-
-
-        vecAtomicAdd(&verts[facets[i*3]*3],S011,1.0/(2 * norm(S01)));
-
-        // reuse S0 
-        vectorAdd(S011,S010,S0);
-        vecAtomicAdd(&verts[facets[i*3+1]*3],S0,-1.0/(2 * norm(S01)));
-
-        vecAtomicAdd(&verts[facets[i*2+2]*3],S010,1.0/(2 * norm(S01)));
-
-		//now we get an order for these things to add it
-
-
-    }
-	
-
-}
 __global__ void volumeGradient(double* gradVFacet, unsigned int* facets,double* verts,unsigned int numFacets){
     // TO DO: this can this can be broken up into 3 for even faster computaiton
     int i = blockDim.x * blockIdx.x + threadIdx.x;

@@ -65,7 +65,6 @@ public:
     __global__ void elementMultiply(double* v1, double* v2, double* out, unsigned int size);
 
 
-    __global__ void areaGradientVert(double* gradAVert, unsigned int* facets,double* verts,unsigned int numFacets);
 
     // __device__ void vectorSub(double * v1, double * v2, double * vOut);
     // __device__ void vectorAdd(double * v1, double * v2, double * vOut);

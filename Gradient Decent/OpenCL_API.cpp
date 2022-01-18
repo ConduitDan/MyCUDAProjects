@@ -30,13 +30,6 @@ void OpenCL::setup(){
 	char retvalue[50];
 
 
-
-
-
-
-
-
-
 	size_t kernel_code_size;
 	cl_uint ret_num_platforms;
 	cl_platform_id platform_id = NULL;
