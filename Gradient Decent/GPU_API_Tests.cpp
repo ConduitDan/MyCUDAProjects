@@ -17,18 +17,19 @@
 BOOST_AUTO_TEST_CASE(Device_Pointers){
 	//copy an array the the device and copy it back 
 	DeviceAPI* GPU = APIFactory::get_API(128);
-
+	printf("made GPU API\n");
 	double myArray[5] = {1,2,3,4,5};
 
 	UniqueDevicePtr<double>devArray(GPU);
-
+	printf("initalized DevicePointer\n");
 	devArray.allocate(5);
+	printf("allocated Device Pointer\n");
 	GPU->copy_to_device(devArray.get(),myArray,5*sizeof(double));
-
+	printf("Copied data to device\n");
 	double myArrayCopiedBack[5];
 
 	GPU->copy_to_host(myArrayCopiedBack,devArray.get(),5*sizeof(double));
-
+	printf("Copied data from device\n");
 	for (int i = 0; i<5; i++){
 		BOOST_CHECK(myArrayCopiedBack[i]==myArray[i]);
 		if (myArrayCopiedBack[i]!=myArray[i]){
@@ -36,6 +37,7 @@ BOOST_AUTO_TEST_CASE(Device_Pointers){
 		}
 	}
 }
+
 
 BOOST_AUTO_TEST_CASE(Device_Pointers_2){
 	//copy an array the the device and copy it back 
@@ -151,12 +153,46 @@ BOOST_AUTO_TEST_CASE(dotProduct){
 
 
 }
-/*
+
 
 BOOST_AUTO_TEST_CASE(project_force){
-	roject_force(UniqueDevicePtr<double> force,UniqueDevicePtr<double> gradAVert,UniqueDevicePtr<double> gradVVert, double scale,unsigned int size) 
+	// calculates c = -(a - scale * b)
+
+	DeviceAPI* GPU = APIFactory::get_API(128);
+
+
+	UniqueDevicePtr<double> a(GPU);
+	UniqueDevicePtr<double> b(GPU);
+	UniqueDevicePtr<double> c(GPU);
+
+	a.allocate(5);
+	b.allocate(5);
+	c.allocate(5);
+
+	double myA[5] = {1,2,3,4,5};
+	double myB[5] = {1,1,1,1,1};
+	double scale = 3;
+	GPU->copy_to_device(a.get(),myA,5*sizeof(double));
+	GPU->copy_to_device(b.get(),myB,5*sizeof(double));
+
+	
+	//({1,2,3,4,5}- (1+2+3+4+5)/5 {1,1,1,1,1})
+	// ({1,2,3,4,5}-{3,3,3,3,3})
+	// ({-2,-1,0,1,2})
+	double expected[5] = {2,1,0,-1,-2};
+	double actual[5];
+
+	GPU->project_force(&c, &a, &b, scale,5);
+	GPU->copy_to_host(actual,c.get(),5*sizeof(double));
+
+	for (int i = 0; i<5; i++){
+		printf("expected %f, got %f\n",expected[i],actual[i]);
+		BOOST_CHECK(expected[i]==actual[i]);
+	}
 
 }
+/*
+
 BOOST_AUTO_TEST_CASE(facet_to_vertex){
 	facet_to_vertex(UniqueDevicePtr<double> vertexValue, UniqueDevicePtr<double> facetValue,UniqueDevicePtr<unsigned int> vertToFacet, UniqueDevicePtr<unsigned int> vertIndexStart,unsigned int numVert)
 

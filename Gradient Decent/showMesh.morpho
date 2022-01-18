@@ -1,5 +1,6 @@
 import plot
 
-var m = Mesh("hopefullyASphere.mesh")
+var m = Mesh("Sphere.mesh")
+print "read in a mesh"
 m.addgrade(1)
 Show(plotmesh(m,grade = 1))

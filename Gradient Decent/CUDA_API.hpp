@@ -1,11 +1,13 @@
 #pragma once
 #ifndef CUDA_API_hpp
 #define CUDA_API_hpp
+
+
+
 #include "DeviceAPI.hpp"
 #include "cuda.h"
 #include "cuda_runtime.h"
 #include <stdio.h> 
-#include "kernalfile.hpp"
 
 
 class CUDA: public DeviceAPI{
@@ -43,6 +45,9 @@ public:
 	void area(UniqueDevicePtr<double>* area, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets);
     void volume(UniqueDevicePtr<double>* volume, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets);
 
+	void area_gradientVert(UniqueDevicePtr<double>* gradAVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert);
+
+
 };
 
 
@@ -58,6 +63,9 @@ public:
     __global__ void facetToVertex(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart,unsigned int numVert);
     __global__ void projectForce(double* force,double* gradAVert,double* gradVVert,double scale,unsigned int numEle);
     __global__ void elementMultiply(double* v1, double* v2, double* out, unsigned int size);
+
+
+    __global__ void areaGradientVert(double* gradAVert, unsigned int* facets,double* verts,unsigned int numFacets);
 
     // __device__ void vectorSub(double * v1, double * v2, double * vOut);
     // __device__ void vectorAdd(double * v1, double * v2, double * vOut);

@@ -38,8 +38,12 @@ void Gradient::calc_force(){
 
 void Gradient::calc_gradA(){
     // first calculate the gradient on the facets
-    _GPU->area_gradient(&_gradAFacet,_myMesh->get_facets(),_myMesh->get_vert(),_myMesh->get_numFacets());
-    _GPU->facet_to_vertex(&_gradAVert,&_gradAFacet,_myMesh->get_vertToFacet(),_myMesh->get_vertIndexStart(),_myMesh->get_numVert());
+    _GPU->area_gradientVert(&_gradAVert,_myMesh->get_facets(),_myMesh->get_vert(),_myMesh->get_numFacets(),_myMesh->get_numVert());
+
+
+
+    //_GPU->area_gradient(&_gradAFacet,_myMesh->get_facets(),_myMesh->get_vert(),_myMesh->get_numFacets());
+    //_GPU->facet_to_vertex(&_gradAVert,&_gradAFacet,_myMesh->get_vertToFacet(),_myMesh->get_vertIndexStart(),_myMesh->get_numVert());
 
 }
 

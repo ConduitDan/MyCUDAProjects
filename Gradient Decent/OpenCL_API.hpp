@@ -13,16 +13,6 @@
 						"projectForce",\
 						"elementMultiply"}
 
-#define PROGRAM_LIST_VAR {areaKernelSTR,\
-						volumeKernelSTR,\
-						addTreeSTR,\
-						addWithMultKernelSTR,\
-						areaGradientSTR,\
-						volumeGradientSTR,\
-						facetToVertexSTR,\
-						projectForceSTR,\
-						elementMultiplySTR}
-
 #define AREA 0
 #define VOLUME 1
 #define ADDTREE 2
@@ -36,7 +26,7 @@
 #define NUMBER_OF_PROGRAMS 9
 
 
-
+#define CL_TARGET_OPENCL_VERSION 220
 #define __CL_ENABLE_EXCEPTIONS
 #include "DeviceAPI.hpp"
 #include "CL/cl.h"
@@ -55,25 +45,16 @@ private:
 	cl_device_id device_id;             		// compute device id 
     cl_context context;                 		// compute context
     cl_command_queue commands;          		// compute command queue
-    cl_program program_list[NUMBER_OF_PROGRAMS];// compute program
+    cl_program program;// compute program
 	cl_kernel kernel_list[NUMBER_OF_PROGRAMS];	// compute kernel
 	const char* programNames[NUMBER_OF_PROGRAMS] = PROGRAM_LIST;
-	const char* programVarNames[NUMBER_OF_PROGRAMS] = {};
-	/*{areaKernelSTR,\
-						volumeKernelSTR,\
-						addTreeSTR,\
-						addWithMultKernelSTR,\
-						areaGradientSTR,\
-						volumeGradientSTR,\
-						facetToVertexSTR,\
-						projectForceSTR,\
-						elementMultiplySTR};*/
-
+	const char* sourcepath = "openCLKernels.cl";
 
     
 	void setup();
 	void one_add_tree(UniqueDevicePtr<double>* vec,size_t local, size_t global);
-
+	const char* getErrorString(cl_int error);
+	void checkSuccess(const char * caller);
 public:
     OpenCL();
     OpenCL(int blocksize);
@@ -100,31 +81,5 @@ public:
 
 
 };
-
-
-
-
-
-// kernal void areaKernel(double * area, double * vert, unsigned int * facets, unsigned int numFacets);
-// kernal void volumeKernel(double * volume, double * vert, unsigned int * facets, unsigned int numFacets);
-// kernal void addTree(double * in, double * out);
-// kernal void addWithMultKernel(double *a ,double *b,double lambda, unsigned int size); // a += b * lambda
-// kernal void areaGradient(double* gradAFacet, unsigned int* facets,double* verts,unsigned int numFacets);
-// kernal void volumeGradient(double* gradVFacet, unsigned int* facets,double* verts,unsigned int numFacets);
-// kernal void facetToVertex(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart,unsigned int numVert);
-// kernal void projectForce(double* force,double* gradAVert,double* gradVVert,double scale,unsigned int numEle);
-// kernal void elementMultiply(double* v1, double* v2, double* out, unsigned int size);
-
-void vectorSub(double * v1, double * v2, double * vOut);
-void vectorAdd(double * v1, double * v2, double * vOut);
-void vecScale(double *v, double lambda);
-void vecAssign(double *out, double *in,double lambda); // out  = in*lambda
-void cross(double *a,double *b, double *c);
-double dot(double *a, double *b, double *c);
-double norm(double *a); 
-int sign(double a);
-
-
     
-
 #endif

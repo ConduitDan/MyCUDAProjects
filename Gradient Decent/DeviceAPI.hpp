@@ -31,6 +31,9 @@ public:
     virtual void area(UniqueDevicePtr<double>* area, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets) = 0;
     virtual void volume(UniqueDevicePtr<double>* volume, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets) = 0;
 
+
+	virtual void area_gradientVert(UniqueDevicePtr<double>* gradAVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert)=0;
+
     DeviceAPI(unsigned int blockSizeIn){blockSize = blockSizeIn;}
 
     unsigned int get_blockSize(){return blockSize;}

@@ -11,16 +11,15 @@
 #include "CUDA_API.hpp"
 #define API CUDA
 
-#elif 1
-//defined __OPENCL_VERSION__
+#elif defined __OPENCL__
 #include "OpenCL_API.hpp"
 #define API OpenCL
 
 #else
+
 #error A CUDA or OpenCL compiler is required!
 
 #endif
-
 
 class APIFactory{
 

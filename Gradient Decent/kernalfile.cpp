@@ -6,39 +6,39 @@
 
 
 
-DPREFACTOR void vectorSub(double * v1, double * v2, double * vOut){
+DPREFACTOR void Kernals::vectorSub(double * v1, double * v2, double * vOut){
     
     *vOut = *v1-*v2;
     *(vOut + 1) = *(v1 + 1) - *(v2 + 1);
     *(vOut + 2) = *(v1 + 2) - *(v2 + 2);
 }
-DPREFACTOR void vectorAdd(double * v1, double * v2, double * vOut) {
+DPREFACTOR void CLASS(vectorAdd)(double * v1, double * v2, double * vOut) {
     *vOut = *v1 + *v2;
     *(vOut + 1) = *(v1 + 1) + *(v2 + 1);
     *(vOut + 2) = *(v1 + 2) + *(v2 + 2);
 }
-DPREFACTOR void vecScale(double *v, double lambda){
+DPREFACTOR void CLASS(vecScale)(double *v, double lambda){
     *v *= lambda;
     *(v+1) *= lambda;
     *(v+2) *= lambda;
 }
-DPREFACTOR void vecAssign(double *out, double *in,double lambda){ // out  = in*lambda
+DPREFACTOR void CLASS(vecAssign)(double *out, double *in,double lambda){ // out  = in*lambda
     *out = *in * lambda;
     *(out + 1) = *(in + 1) * lambda;
     *(out + 2) = *(in + 2) * lambda;
 }
-DPREFACTOR void cross(double *a,double *b, double *c) {
+DPREFACTOR void CLASS(cross)(double *a,double *b, double *c) {
     (*c)     = (*(a+1)) * (*(b+2)) - (*(a+2)) * (*(b+1));
     (*(c+1)) = (*(b)) * (*(a+2)) - (*(a)) * (*(b+2));
     (*(c+2)) = (*(a)) * (*(b+1)) - (*(b)) * (*(a+1));
 }
 
-DPREFACTOR double dot(double *a, double *b) {
+DPREFACTOR double CLASS(dot)(double *a, double *b) {
      return ((*a) * (*b) + (*(a+1)) * (*(b+1)) + (*(a+2)) * (*(b+2)));
 }
 
-DPREFACTOR double norm(double *a) {
-    return sqrt(dot(a, a));
+DPREFACTOR double CLASS(norm)(double *a) {
+    return sqrt(CLASS(dot)(a, a));
 }
 
 DPREFACTOR int sign(double a){
@@ -47,24 +47,41 @@ DPREFACTOR int sign(double a){
     else return 0;
 }
 
+const char* Kernals::areaKernelSTR = "void areaKernel(double * area, double * vert, unsigned int * facets, unsigned int numFacets){\n"\
+"   int i = get_global_id(0);\n"\
+"    // do i*3 because we have 3 vertcies per facet\n"\
+"    // do facets[]*3 becasue we have x y and z positions\n"\
+"    double r10[3];\n"\
+"    double r21[3];\n"\
+"    double S[3];\n"\
+"\n"\
+"    if (i < numFacets) {\n"\
+"        Kernals::vectorSub(&vert[facets[i*3+1]*3], &vert[facets[i*3]*3],r10);\n"\
+"        Kernals::vectorSub(&vert[facets[i*3+2]*3], &vert[facets[i*3+1]*3],r21);  \n"\  
+"        Kernals::cross(r10, r21,S);\n"\
+"        area[i] = Kernals::norm(S)/2;\n"\
+"    }\n"\
+"    else {\n"\
+"        area[i] = 0;\n"\
+"    }\n"\
+"}\n";
 
+// PREAMBLE(areaKernel) PREP_FOR_PARSE(void areaKernel(DEVTAG double * area,DEVTAG double * vert,DEVTAG unsigned int * facets, unsigned int numFacets){
+//     int i = GETID;
+//     double r10[3];
+//     double r21[3];
+//     double S[3];
 
-PREAMBLE(areaKernel) PREP_FOR_PARSE(void areaKernel(DEVTAG double * area,DEVTAG double * vert,DEVTAG unsigned int * facets, unsigned int numFacets){
-    int i = GETID;
-    double r10[3];
-    double r21[3];
-    double S[3];
-
-    if (i < numFacets) {
-        vectorSub(&vert[facets[i*3+1]*3], &vert[facets[i*3]*3],r10);
-        vectorSub(&vert[facets[i*3+2]*3], &vert[facets[i*3+1]*3],r21);    
-        cross(r10, r21,S);
-        area[i] = norm(S)/2;
-    }
-    else {
-        area[i] = 0;
-    }
-})
+//     if (i < numFacets) {
+//         CLASS(vectorSub)(&vert[facets[i*3+1]*3], &vert[facets[i*3]*3],r10);
+//         CLASS(vectorSub)(&vert[facets[i*3+2]*3], &vert[facets[i*3+1]*3],r21);    
+//         CLASS(cross)(r10, r21,S);
+//         area[i] = CLASS(norm)(S)/2;
+//     }
+//     else {
+//         area[i] = 0;
+//     }
+// })
 
 
 
@@ -74,8 +91,8 @@ PREAMBLE(volumeKernel) PREP_FOR_PARSE( void volumeKernel(DEVTAG double * volume,
 
     double s01[3];
     if (i < numFacets){
-        cross(&vert[facets[i*3]*3], &vert[facets[i*3+1]*3],s01);
-        volume[i] = abs(dot(s01,&vert[facets[i*3+2]*3]))/6;
+        CLASS(cross)(&vert[facets[i*3]*3], &vert[facets[i*3+1]*3],s01);
+        volume[i] = abs(CLASS(dot)(s01,&vert[facets[i*3+2]*3]))/6;
     }
     else {
         volume[i] = 0;
@@ -122,18 +139,18 @@ PREAMBLE(areaGradient) PREP_FOR_PARSE( void areaGradient( DEVTAG double* gradAFa
     double S010[3];
     double S011[3];
     if (i<numFacets){
-        vectorSub(&verts[facets[i*3+1]*3], &verts[facets[i*3]*3],S0);
-        vectorSub(&verts[facets[i*3+2]*3], &verts[facets[i*3+1]*3],S1);
-        cross(S0,S1,S01);
-        cross(S01,S0,S010);
-        cross(S01,S1,S011);
+        CLASS(vectorSub)(&verts[facets[i*3+1]*3], &verts[facets[i*3]*3],S0);
+        CLASS(vectorSub)(&verts[facets[i*3+2]*3], &verts[facets[i*3+1]*3],S1);
+        CLASS(cross)(S0,S1,S01);
+        CLASS(cross)(S01,S0,S010);
+        CLASS(cross)(S01,S1,S011);
 
-        vecAssign(&gradAFacet[i*9],S011,1.0/(2 * norm(S01)));
+        CLASS(vecAssign)(&gradAFacet[i*9],S011,1.0/(2 * CLASS(norm)(S01)));
 
-        vectorAdd(S011,S010,S0);
-        vecAssign(&gradAFacet[i*9 + 3],S0,-1.0/(2 * norm(S01)));
+        CLASS(vectorAdd)(S011,S010,S0);
+        CLASS(vecAssign)(&gradAFacet[i*9 + 3],S0,-1.0/(2 * CLASS(norm)(S01)));
 
-        vecAssign(&gradAFacet[i*9 + 6],S010,1.0/(2 * norm(S01)));
+        CLASS(vecAssign)(&gradAFacet[i*9 + 6],S010,1.0/(2 * CLASS(norm)(S01)));
     }
 
 })
@@ -142,17 +159,17 @@ PREAMBLE(volumeGradient) PREP_FOR_PARSE( void volumeGradient(DEVTAG double* grad
     double c[3];
     double s = 1;
     if (i<numFacets){
-        cross(&verts[facets[i*3]*3],&verts[facets[i*3+1]*3],c);
-        s = sign(dot(c,&verts[facets[i*3+2]*3]));
+        CLASS(cross)(&verts[facets[i*3]*3],&verts[facets[i*3+1]*3],c);
+        s = sign(CLASS(dot)(c,&verts[facets[i*3+2]*3]));
 
-        cross(&verts[facets[i*3+1]*3],&verts[facets[i*3+2]*3],c);
-        vecAssign(&gradVFacet[i*9],c,s/6);
+        CLASS(cross)(&verts[facets[i*3+1]*3],&verts[facets[i*3+2]*3],c);
+        CLASS(vecAssign)(&gradVFacet[i*9],c,s/6);
 
-        cross(&verts[facets[i*3+2]*3],&verts[facets[i*3]*3],c);
-        vecAssign(&gradVFacet[i*9 + 3],c,s/6);
+        CLASS(cross)(&verts[facets[i*3+2]*3],&verts[facets[i*3]*3],c);
+        CLASS(vecAssign)(&gradVFacet[i*9 + 3],c,s/6);
 
-        cross(&verts[facets[i*3]*3],&verts[facets[i*3+1]*3],c);
-        vecAssign(&gradVFacet[i*9 + 6],c,s/6);
+        CLASS(cross)(&verts[facets[i*3]*3],&verts[facets[i*3+1]*3],c);
+        CLASS(vecAssign)(&gradVFacet[i*9 + 6],c,s/6);
     }
 
 })
@@ -165,7 +182,7 @@ PREAMBLE(facetToVertex) PREP_FOR_PARSE( void facetToVertex(DEVTAG double* vertex
         vertexValue[i*3 + 1] = 0;
         vertexValue[i*3 + 2] = 0;
         for (int index = vertIndexStart[i]; index < vertIndexStart[i+1]; index++){
-            vectorAdd(&vertexValue[i*3],&facetValue[3*vertToFacet[index]],&vertexValue[i*3]);
+            CLASS(vectorAdd)(&vertexValue[i*3],&facetValue[3*vertToFacet[index]],&vertexValue[i*3]);
         }
     }
 })

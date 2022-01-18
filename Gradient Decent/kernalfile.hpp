@@ -41,13 +41,15 @@
 #define DEVTAG __global
 #define HEADERTAG //
 #define STRHEADERTAG
-#define GETID get_global_id();
+#define GETID get_global_id()
 
-#define PREAMBLE(NAME) const char* NAME ## STR = 
+#define PREAMBLE(NAME) const char* Kernals::NAME ## STR = 
 
 #define STR(ARG) #ARG;
 
 #define PREP_FOR_PARSE(ARG) STR(ARG)
+
+#define CLASS(ARG) Kernals::ARG
 
 #define DPREFACTOR 
 
@@ -59,16 +61,34 @@
 #include "CL/cl.h"
 
 
-// const char* 	areaKernelSTR;
-// const char* 	volumeKernelSTR;
-// const char* 	addTreeSTR;
-// const char* 	addWithMultKernelSTR;
-// const char* 	areaGradientSTR;
-// const char* 	volumeGradientSTR;
-// const char* 	facetToVertexSTR;
-// const char* 	projectForceSTR;
-// const char* 	elementMultiplySTR;
 
+
+
+class Kernals{
+
+public:
+
+DPREFACTOR void vectorSub(double * v1, double * v2, double * vOut);
+DPREFACTOR void vectorAdd(double * v1, double * v2, double * vOut);
+DPREFACTOR void vecScale(double *v, double lambda);
+DPREFACTOR void vecAssign(double *out, double *in,double lambda);
+DPREFACTOR void cross(double *a,double *b, double *c) ;
+DPREFACTOR double dot(double *a, double *b) ;
+
+DPREFACTOR double norm(double *a);
+
+DPREFACTOR int sign(double a);
+
+static const char* 	areaKernelSTR;
+static const char* 	volumeKernelSTR;
+static const char* 	addTreeSTR;
+static const char* 	addWithMultKernelSTR;
+static const char* 	areaGradientSTR;
+static const char* 	volumeGradientSTR;
+static const char* 	facetToVertexSTR;
+static const char* 	projectForceSTR;
+static const char* 	elementMultiplySTR;
+};
 
 #else
 #error A CUDA or OpenCL compiler is required!
