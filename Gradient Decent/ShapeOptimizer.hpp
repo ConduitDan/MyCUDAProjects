@@ -6,6 +6,9 @@
 
 #include "Mesh.hpp"
 #include "Gradient.hpp"
+#include "DeviceAPI.hpp"
+#include "APIFactory.hpp"
+
 
 class ShapeOptimizer
 {
@@ -13,6 +16,7 @@ private:
     Mesh* _mesh;
     DeviceMesh* _DMesh;
     Gradient* _gradient;
+    DeviceAPI* _GPU;
     double tol = 1e-10;
     double _startingVol = 0;
     double _stepSize = 0.1;

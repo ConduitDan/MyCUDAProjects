@@ -3,40 +3,48 @@
 #define Gradient_hpp
 
 #include "Mesh.hpp"
+#include "DeviceAPI.hpp"
+#include <memory>
 class DeviceMesh;
 
 class Gradient{
-private:
+protected:
 	DeviceMesh *_myMesh;
 
-	double *_gradAFacet = nullptr;
-	double *_gradAVert = nullptr;
+	DeviceAPI *_GPU = nullptr; 
 
-	double *_gradVFacet = nullptr;
-	double *_gradVVert = nullptr;
+	UniqueDevicePtr<double> _gradAFacet = UniqueDevicePtr<double>(_GPU);
+	UniqueDevicePtr<double> _gradAVert = UniqueDevicePtr<double>(_GPU);
 
-	double *_force = nullptr;
-	double *_scratch = nullptr;
+	UniqueDevicePtr<double> _gradVFacet = UniqueDevicePtr<double>(_GPU);
+	UniqueDevicePtr<double> _gradVVert = UniqueDevicePtr<double>(_GPU);
 
-	cudaError_t _cudaStatus = cudaSetDevice(0);
+	UniqueDevicePtr<double> _force = UniqueDevicePtr<double>(_GPU);
+	UniqueDevicePtr<double> _scratch = UniqueDevicePtr<double>(_GPU);
 
 
 	void calc_gradA();
 	void calc_gradV();
-	void facet_to_vertex(double*, double*);
+
+private:
+
+	void calc_gradA_facet();
+	void calc_gradV_facet();
 	void project_to_force();
 
 
 
 public:
-	Gradient(DeviceMesh *inMesh);
-	~Gradient();
+	Gradient(DeviceMesh *inMesh, DeviceAPI* GPUAPIin);
 	void calc_force();
+	
 	void reproject(double res);
 
 
-	double* get_gradA(){return _gradAVert;}
-	double* get_gradV(){return _gradVVert;}
-	double* get_force(){return _force;}
+	UniqueDevicePtr<double> *get_gradA(){return &_gradAVert;}
+	UniqueDevicePtr<double> *get_gradV(){return &_gradVVert;}
+	UniqueDevicePtr<double> *get_force(){return &_force;}
 };
+
+
 #endif

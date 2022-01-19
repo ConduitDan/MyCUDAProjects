@@ -1,7 +1,5 @@
-// Kernals.cu
-// here is where all the device and global functions live
+#include "kernalfile.hpp"
 
-#include "Kernals.hpp"
 __device__ void vectorSub(double * v1, double * v2, double * vOut){
     
     *vOut = *v1-*v2;
@@ -218,67 +216,3 @@ __global__ void elementMultiply(double* v1, double* v2, double* out, unsigned in
 }
 
 
-
-double sum_of_elements(cudaError_t cudaStatus,double* vec,unsigned int size,unsigned int bufferedSize,unsigned int blockSize){
-
-    double out;
-
-    // do the reduction each step sums blockSize*2 number of elements
-    unsigned int numberOfBlocks = ceil(size / (float) blockSize / 2.0);
-    // printf("AddTree with %d blocks,  of blocks size %d, for %d total elements\n",numberOfBlocks,blockSize,_bufferedSize);
-    
-    addTree<<<numberOfBlocks, blockSize, blockSize  * sizeof(double) >>> (vec, vec);
-    cuda_sync_and_check(cudaStatus,"sum of elements");
-
-
-    if (numberOfBlocks>1){
-        for (int i = numberOfBlocks; i > 1; i /= (blockSize * 2)) {
-            addTree<<<ceil((float)numberOfBlocks/ (blockSize * 2)), blockSize, blockSize * sizeof(double)>>> (vec, vec);
-            cuda_sync_and_check(cudaStatus,"sum of elements");
-        } 
-    }
-
-    // copy the 0th element out of the vector now that it contains the sum
-    cudaStatus = cudaMemcpy(&out, vec,sizeof(double), cudaMemcpyDeviceToHost);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMemcpy failed! area\n");
-    throw;
-    }
-
-    return out;
-
-}
-
-void cuda_sync_and_check(cudaError_t cudaStatus, const char * caller){
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "Kernel launch failed: %s. From %s\n", cudaGetErrorString(cudaStatus),caller);
-        throw "Kernel Launch Failure";
-    }
-    // check that the kernal didn't throw an error
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error %s after launching Kernel %s!\n", cudaGetErrorString(cudaStatus),caller);
-        throw "Kernel Failure";
-    }
-
-}
-double dotProduct(cudaError_t cudaStatus,double * v1, double * v2, double * scratch, unsigned int size, unsigned int blockSize){
-
-    // first multiply
-    unsigned int numberOfBlocks = ceil(size / (float) blockSize);
-
-    elementMultiply<<<numberOfBlocks,blockSize>>>(v1,v2, scratch,size);
-    cuda_sync_and_check(cudaStatus,"Element Multiply");
-    unsigned int bufferedSize = ceil(size/(2.0*blockSize))*2 *blockSize;
-    //now sum
-    double out = sum_of_elements(cudaStatus,scratch,size, bufferedSize,blockSize);
-    
-    // clear the scratch
-    cudaMemset(scratch,0,sizeof(double)*bufferedSize);
-    cuda_sync_and_check(cudaStatus,"dotProduct");
-
-    return out;
-
-
-}
