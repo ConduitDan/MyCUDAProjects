@@ -8,8 +8,19 @@
 
 #ifdef __NVCC__
 
-#include "CUDA_API.hpp"
-#define API CUDA
+	// flag for cuBLAS optimizations
+	#ifdef __cuBLASopt__
+
+		#include "cuBLASAPI.hpp"
+		#define API cuBLAS
+		
+
+	#else
+
+		#include "CUDA_API.hpp"
+		#define API CUDA
+
+	#endif
 
 #elif defined __OPENCL__
 #include "OpenCL_API.hpp"

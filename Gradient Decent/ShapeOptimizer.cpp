@@ -32,7 +32,7 @@ double ShapeOptimizer::reproject_constraints(){
 
         j++;
         if (j>_maxConstraintSteps){
-            printf("Warning: Too many steps in constraint satisfaction\n");
+            printf("Warning: Too many steps in constraint satisfaction, off by %f\n",res);
             break;
         }
     }
@@ -56,7 +56,7 @@ double ShapeOptimizer::gradientDesent(int n){ // do n gradient desent steps
         
 
 
-        fprintf(stdout,"Step %d: volume = %f \t area = %f delta area = %f\n",i+1,_DMesh->volume(),area,dArea);
+        fprintf(stdout,"Step %d: volume = %f \t area = %f delta area = %e\n",i+1,_DMesh->volume(),area,dArea);
         if (abs(dArea)<_dAtol){break;}
     
     }

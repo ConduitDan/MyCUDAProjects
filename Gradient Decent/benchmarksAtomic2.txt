@@ -1,0 +1,42 @@
+./optcuBLASAtomic2.out Meshs/cube1.mesh 10000
+0.37
+./optcuBLASAtomic2.out Meshs/cube1.mesh 10000
+0.36
+./optcuBLASAtomic2.out Meshs/cube1.mesh 10000
+0.39
+./optcuBLASAtomic2.out Meshs/cube2.mesh 10000
+1.46
+./optcuBLASAtomic2.out Meshs/cube2.mesh 10000
+1.44
+./optcuBLASAtomic2.out Meshs/cube2.mesh 10000
+1.44
+./optcuBLASAtomic2.out Meshs/cube3.mesh 10000
+2.44
+./optcuBLASAtomic2.out Meshs/cube3.mesh 10000
+2.43
+./optcuBLASAtomic2.out Meshs/cube3.mesh 10000
+2.47
+./optcuBLASAtomic2.out Meshs/cube4.mesh 10000
+2.88
+./optcuBLASAtomic2.out Meshs/cube4.mesh 10000
+2.93
+./optcuBLASAtomic2.out Meshs/cube4.mesh 10000
+2.89
+./optcuBLASAtomic2.out Meshs/cube5.mesh 10000
+4.76
+./optcuBLASAtomic2.out Meshs/cube5.mesh 10000
+4.78
+./optcuBLASAtomic2.out Meshs/cube5.mesh 10000
+4.76
+./optcuBLASAtomic2.out Meshs/cube6.mesh 10000
+19.45
+./optcuBLASAtomic2.out Meshs/cube6.mesh 10000
+19.39
+./optcuBLASAtomic2.out Meshs/cube6.mesh 10000
+19.51
+./optcuBLASAtomic2.out Meshs/cube7.mesh 10000
+198.31
+./optcuBLASAtomic2.out Meshs/cube7.mesh 10000
+198.55
+./optcuBLASAtomic2.out Meshs/cube7.mesh 10000
+198.38

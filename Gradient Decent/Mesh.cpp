@@ -201,14 +201,18 @@ DeviceMesh::DeviceMesh(Mesh* hostMesh, DeviceAPI* GPUin){
 	_GPU = GPUin;
 	// tell the device pointers what API to use
 	_vert = UniqueDevicePtr<double>(_GPU);
-	_facets = UniqueDevicePtr<unsigned>(_GPU);
+	_facets = UniqueDevicePtr<unsigned int>(_GPU);
 
 	// arrays holding the map from vertex to <facet, # in facet>
-	_vertToFacet = UniqueDevicePtr<unsigned>(_GPU); // the a list of facet indcies sorted by vertex
-	_vertIndexStart = UniqueDevicePtr<unsigned>(_GPU);// where the indcies in vertToFacet start for a vertex 
+	_vertToFacet = UniqueDevicePtr<unsigned int>(_GPU); // the a list of facet indcies sorted by vertex
+	_vertIndexStart = UniqueDevicePtr<unsigned int>(_GPU);// where the indcies in vertToFacet start for a vertex 
+	// lets try an add order for the facets, this will be a 3*numfacet list 
+	_facetAddOrder = UniqueDevicePtr<unsigned int>(_GPU);
+
 
 	_area = UniqueDevicePtr<double>(_GPU);// holds the area per facet
 	_volume = UniqueDevicePtr<double>(_GPU);// holds the volume per facet
+
 
 
 
@@ -221,35 +225,51 @@ DeviceMesh::DeviceMesh(Mesh* hostMesh, DeviceAPI* GPUin){
     // create the vertex-><facets, # in facet> map
     // there should be 3*_numfacets values in the map.
     // we should store a compaion array with the starting index for vertex i in the map
+	if (useF2V) {
+		std::unique_ptr <unsigned int[]> vertToFacet(new unsigned int [_numFacets * 3] {0});// (store i*3 + j);
+		//unsigned int *vertToFacetIndex = new unsigned int [_numFacets * 3] {0};
+		std::unique_ptr <unsigned int[]> vertIndexStart(new unsigned int [_numVert+1] {0}); // + one more here so we have[0...numVert] to make logic simpler for first or last ele
+		std::unique_ptr <unsigned int[]> vertCount(new unsigned int [_numVert] {0});
+		std::unique_ptr <unsigned int[]> facetAddOrder(new unsigned int [_numFacets * 3] {0});
 
-    std::unique_ptr <unsigned int[]> vertToFacet(new unsigned int [_numFacets * 3] {0});// (store i*3 + j);
-    //unsigned int *vertToFacetIndex = new unsigned int [_numFacets * 3] {0};
-    std::unique_ptr <unsigned int[]> vertIndexStart(new unsigned int [_numVert+1] {0}); // + one more here so we have[0...numVert] to make logic simpler for first or last ele
-    std::unique_ptr <unsigned int[]> vertCount(new unsigned int [_numVert] {0});
+		
+		unsigned int* hostFacets = hostMesh->get_facets();
 
-    
-    unsigned int* hostFacets = hostMesh->get_facets();
+		// first fill out how many facets each vertex participates in; 
+		for (int i = 0; i<_numFacets * 3; i++){
+			vertIndexStart[*(hostFacets+i)+1]++;
+		}
+		// add the previous entry so it now marks where the entries end for this vertex
+		for (int i = 0; i<_numVert; i++){
+			vertIndexStart[i+1]+=vertIndexStart[i];
+		}
 
-    // first fill out how many facets each vertex participates in; 
-    for (int i = 0; i<_numFacets * 3; i++){
-        vertIndexStart[*(hostFacets+i)+1]++;
-    }
-    // add the previous entry so it now marks where the entries end for this vertex
-    for (int i = 0; i<_numVert; i++){
-        vertIndexStart[i+1]+=vertIndexStart[i];
-    }
+		unsigned int index;
+		unsigned int vertex; 
+		_maxAdd = 0;
+		for (int i = 0; i<_numFacets*3; i++){
 
-    unsigned int index;
-    unsigned int vertex; 
-    for (int i = 0; i<_numFacets*3; i++){
+			vertex = *(hostFacets + i);
+			index = vertIndexStart[vertex]+vertCount[vertex];
 
-        vertex = *(hostFacets + i);
-        index = vertIndexStart[vertex]+vertCount[vertex];
+			vertToFacet[index] = i;
+			facetAddOrder[i] = vertCount[vertex];
+			vertCount[vertex]++;
+			if (vertCount[vertex]>_maxAdd){_maxAdd = vertCount[vertex]; }
 
-        vertToFacet[index] = i;
-        vertCount[vertex]++;
-    }
 
+		}
+			_vertToFacet.allocate(_numFacets * 3);
+		_vertIndexStart.allocate(_numVert+1);
+		_facetAddOrder.allocate(_numFacets * 3);
+
+
+		// and the map for vertex-> facet
+		_GPU->copy_to_device(_vertToFacet.get(),    vertToFacet.get(),            _numFacets * 3 * sizeof(unsigned int));
+		_GPU->copy_to_device(_vertIndexStart.get(), vertIndexStart.get(),         (_numVert+1) * sizeof(unsigned int));
+		_GPU->copy_to_device(_facetAddOrder.get(),    facetAddOrder.get(),            _numFacets * 3 * sizeof(unsigned int));
+
+	}
 
     unsigned int blockSize = _GPU->get_blockSize();
 
@@ -261,8 +281,6 @@ DeviceMesh::DeviceMesh(Mesh* hostMesh, DeviceAPI* GPUin){
     _vert.allocate(_numVert * 3);
     _facets.allocate(_numFacets * 3);
     // the map from vertex to the facets its part of
-    _vertToFacet.allocate(_numFacets * 3);
-    _vertIndexStart.allocate(_numVert+1);
     // and the area and volume vectors
     _area.allocate(_bufferedSize * 3);
     _volume.allocate(_bufferedSize * 3);
@@ -271,10 +289,6 @@ DeviceMesh::DeviceMesh(Mesh* hostMesh, DeviceAPI* GPUin){
     _GPU->copy_to_device(_vert.get(),           hostMesh->get_vert(),   _numVert * 3 * sizeof(double));
     _GPU->copy_to_device(_facets.get(),         hostMesh->get_facets(), _numFacets * 3 * sizeof(unsigned int));
     
-	// COPYING UNSIGNED INTS TO THE DEVICE ISN'T WORKING or maybe copying back isn't? ( area works?)
-    // and the map for vertex-> facet
-    _GPU->copy_to_device(_vertToFacet.get(),    vertToFacet.get(),            _numFacets * 3 * sizeof(unsigned int));
-    _GPU->copy_to_device(_vertIndexStart.get(), vertIndexStart.get(),         (_numVert+1) * sizeof(unsigned int));
 }
 
 

@@ -20,7 +20,7 @@ private:
     double tol = 1e-10;
     double _startingVol = 0;
     double _stepSize = 0.1;
-    double _dAtol = 1e-8;
+    double _dAtol = 1e-16;
 
     int _maxConstraintSteps = 20;
 

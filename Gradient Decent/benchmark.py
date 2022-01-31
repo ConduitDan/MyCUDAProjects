@@ -2,7 +2,7 @@
 
 import os
 import re
-
+import sys
 def run(command, file):
     out = -1
 
@@ -36,10 +36,21 @@ def getoutput(filepath):
 
 # do a comparison for 9 levels of cube refinement
 
-print(run("morpho5","cubeRelaxer.morpho"))
+# print(run("morpho5","cubeRelaxer.morpho"))
+with open('benchmarksAtomic2.txt', 'w') as f:
+    original_stdout = sys.stdout
+    Names = ["CUDA","CUDAAtomic2","cuBLAS","cuBLASAtomic2"]
+    for k in [3]:
+        for i in range(7):
+            for j in range (3):
+                print("opt"+Names[k] + " run " + str(j)+ " Mesh "+str(i+1))
+                #print("morpho "+ " run " + str(j)+ " Mesh "+str(i+1))
+                sys.stdout = f # Change the standard output to the file we created.
+                #print(run("morpho5"," Meshs/cubeRelaxer.morpho"))
+                print(run("./opt" + Names[k] + ".out", "Meshs/cube" + str(i+1) +".mesh 10000"))
+                sys.stdout = original_stdout # Reset the standard output to its original value
 
-#for i in range(6):
-#    print(run("./opt.out", "cube" + str(i+1) +".mesh 10000"))
+
 
 
 

@@ -62,17 +62,23 @@ private:
 
 	
 	UniqueDevicePtr<double> _vert = UniqueDevicePtr<double>(_GPU);
-	UniqueDevicePtr<unsigned> _facets = UniqueDevicePtr<unsigned>(_GPU);
+	UniqueDevicePtr<unsigned int> _facets = UniqueDevicePtr<unsigned int>(_GPU);
 
 	// arrays holding the map from vertex to <facet, # in facet>
-	UniqueDevicePtr<unsigned> _vertToFacet = UniqueDevicePtr<unsigned>(_GPU); // the a list of facet indcies sorted by vertex
-	UniqueDevicePtr<unsigned> _vertIndexStart = UniqueDevicePtr<unsigned>(_GPU);// where the indcies in vertToFacet start for a vertex 
+	UniqueDevicePtr<unsigned int> _vertToFacet = UniqueDevicePtr<unsigned int>(_GPU); // the a list of facet indcies sorted by vertex
+	UniqueDevicePtr<unsigned int> _vertIndexStart = UniqueDevicePtr<unsigned int>(_GPU);// where the indcies in vertToFacet start for a vertex 
+
+	UniqueDevicePtr<unsigned int> _facetAddOrder = UniqueDevicePtr<unsigned int>(_GPU);
 
 	UniqueDevicePtr<double> _area = UniqueDevicePtr<double>(_GPU);// holds the area per facet
 	UniqueDevicePtr<double> _volume = UniqueDevicePtr<double>(_GPU);// holds the volume per facet
 	
 	unsigned int _blockSize;
 	unsigned int _bufferedSize;
+
+	unsigned int _maxAdd;
+	bool useF2V = false;
+
 	
 public:
 	DeviceMesh(Mesh*,DeviceAPI*); //copies a Mesh over to the device 
@@ -87,10 +93,15 @@ public:
 	unsigned int get_numVert(){ return _numVert; }
 	unsigned int get_numFacets(){ return _numFacets; }
 	unsigned int get_blockSize(){ return _blockSize; }
+	unsigned int get_maxAdd(){ return _maxAdd; }
+
 	UniqueDevicePtr<double>* get_vert() { return &_vert; }
 	UniqueDevicePtr<unsigned int>* get_facets(){ return &_facets; }
 	UniqueDevicePtr<unsigned int>* get_vertToFacet(){ return &_vertToFacet; }
 	UniqueDevicePtr<unsigned int>* get_vertIndexStart(){ return &_vertIndexStart; }
+	UniqueDevicePtr<unsigned int>* get_facetAddOrder(){ return &_facetAddOrder; }
+
+
 	
 };
 

@@ -20,7 +20,9 @@ CUDA::CUDA(int blockSizeIn):DeviceAPI(blockSizeIn){
     }
 }
 
-
+CUDA::~CUDA(){
+	cudaDeviceReset();
+}
 
 void CUDA::allocate(void** ptr, unsigned int size){
 
@@ -67,7 +69,9 @@ void CUDA::project_force(UniqueDevicePtr<double>* force,UniqueDevicePtr<double>*
 }
 void CUDA::facet_to_vertex(UniqueDevicePtr<double>* vertexValue, UniqueDevicePtr<double>* facetValue,UniqueDevicePtr<unsigned int>* vertToFacet, UniqueDevicePtr<unsigned int>* vertIndexStart,unsigned int numVert){
     unsigned int numberOfBlocks = ceil(numVert / (float) blockSize);
-    facetToVertex<<<numberOfBlocks, blockSize>>>((double*)vertexValue->get(),\
+	dim3 numberOfBlocks3D( numberOfBlocks, 1, 1 );
+	dim3 blockSize3D( blockSize, 3, 1 );
+    facetToVertex<<<numberOfBlocks3D, blockSize3D>>>((double*)vertexValue->get(),\
 												 (double*)facetValue->get(),\
 												 (unsigned int*)vertToFacet->get(),\
 												 (unsigned int*)vertIndexStart->get(),numVert);
@@ -91,15 +95,80 @@ void CUDA::volume_gradient(UniqueDevicePtr<double>* gradVFacet,UniqueDevicePtr<u
     cuda_sync_and_check("GradV");
 
 }
+void CUDA::area_gradient2(UniqueDevicePtr<double>* gradAVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert){
+	// mem set and call kernal
+    cudaMemset(gradAVert->get(),0.0,sizeof(double)*numVert*3);
+	cuda_sync_and_check("memset");
+	unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
+    areaGradient2<<<numberOfBlocks, blockSize>>>((double*)gradAVert->get(), (unsigned int*)facets->get(), (double*)vert->get(),numFacets);
+    cuda_sync_and_check("GradA");
+//(double* gradVVert, unsigned int* facets,double* verts,unsigned int numFacets)
+}
+void CUDA::volume_gradient2(UniqueDevicePtr<double>* gradVVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert){
+    cudaMemset(gradVVert->get(),0.0,sizeof(double)*numVert*3);
+	cuda_sync_and_check("memset");
+
+    unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
+    volumeGradient2<<<numberOfBlocks, blockSize>>>((double*)gradVVert->get(), (unsigned int*)facets->get(), (double*)vert->get(),numFacets);
+    cuda_sync_and_check("GradV");
+
+}
+void CUDA::area_gradient3(UniqueDevicePtr<double>* gradAVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert){
+	// mem set and call kernal
+    cudaMemset(gradAVert->get(),0.0,sizeof(double)*numVert*3);
+	cuda_sync_and_check("memset");
+
+	unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
+
+	dim3 numberOfBlocks3D( numberOfBlocks, 1, 1 );
+	dim3 blockSize3D( blockSize, 3, 1 );
+
+    areaGradient3<<<numberOfBlocks3D, blockSize3D,15*blockSize*sizeof(double)>>>((double*)gradAVert->get(), (unsigned int*)facets->get(), (double*)vert->get(),numFacets);
+    cuda_sync_and_check("GradA");
+//(double* gradVVert, unsigned int* facets,double* verts,unsigned int numFacets)
+}
+void CUDA::volume_gradient3(UniqueDevicePtr<double>* gradVVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert){
+    
+	
+
+
+
+	// int tmpBlockSize = ceil((float)blockSize/9);
+	// // find the closest multiple of 32 
+	// tmpBlockSize = ceil((float)tmpBlockSize/32)*32; 
+
+
+    // unsigned int numberOfBlocks = floor(numFacets / (float) tmpBlockSize);
+	// tmpBlockSize = 1;
+	// numberOfBlocks = numFacets;
+	// dim3 blockSize3D( tmpBlockSize, 3, 3 );
+	// unsigned int numberOfBlocks = floor(numFacets / (float) blockSize);
+	// dim3 blockSize3D( blockSize, 3, 3 );
+	// dim3 numberOfBlocks3D( numberOfBlocks, 1);
+	
+	cudaMemset(gradVVert->get(),0.0,sizeof(double)*numVert*3);
+	cuda_sync_and_check("memset");
+
+	unsigned int tmpBlockSize = 32;
+    unsigned int numberOfBlocks = ceil(numFacets / (float) tmpBlockSize);
+
+	dim3 numberOfBlocks3D( numberOfBlocks, 1, 1 );
+	dim3 blockSize3D( tmpBlockSize, 3, 3 );
+//	printf("calling volGrad3 with %d blocks of size %d X %d X %d \n",numberOfBlocks,blockSize,3,3);
+
+    volumeGradient3<<<numberOfBlocks3D, blockSize3D,blockSize*sizeof(double)>>>((double*)gradVVert->get(), (unsigned int*)facets->get(), (double*)vert->get(),numFacets);
+    cuda_sync_and_check("GradV");
+
+}
 
 
 double CUDA::sum_of_elements(UniqueDevicePtr<double>* vec,unsigned int size,unsigned int bufferedSize){
 
     double out;
-
+	
     // do the reduction each step sums blockSize*2 number of elements
     unsigned int numberOfBlocks = ceil(size / (float) blockSize / 2.0);
-    // printf("AddTree with %d blocks,  of blocks size %d, for %d total elements\n",numberOfBlocks,blockSize,_bufferedSize);
+    //printf("AddTree with %d blocks,  of blocks size %d, for %d total elements\n",numberOfBlocks,blockSize,bufferedSize);
     
     addTree<<<numberOfBlocks, blockSize, blockSize  * sizeof(double) >>> ((double*)vec->get(), (double*)vec->get());
     cuda_sync_and_check("sum of elements");
@@ -150,7 +219,7 @@ double CUDA::dotProduct(UniqueDevicePtr<double>* v1, UniqueDevicePtr<double>* v2
 	cuda_sync_and_check("sum_of_elments");
 
     // clear the scratch
-    //cudaMemset(scratch->get(),0.0,sizeof(double)*bufferedSize);
+    cudaMemset(scratch->get(),0.0,sizeof(double)*bufferedSize);
 	cuda_sync_and_check("memset");
 
     return out;
@@ -166,9 +235,11 @@ void CUDA::area(UniqueDevicePtr<double>* area, UniqueDevicePtr<double>* vert, Un
 
 }
 void CUDA::volume(UniqueDevicePtr<double>* volume, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets){
+	
+	cuda_sync_and_check("inb4 volume");
     unsigned int numberOfBlocks = ceil(numFacets / (float) blockSize);
     volumeKernel<<<numberOfBlocks,blockSize>>>((double*)volume->get(),(double*) vert->get(), (unsigned int*) facets->get(), numFacets);
-    cuda_sync_and_check("area");
+    cuda_sync_and_check("volume");
 
 }
 void CUDA::add_with_mult(UniqueDevicePtr<double>* a,UniqueDevicePtr<double>* b, double lambda, unsigned int size){
@@ -197,7 +268,19 @@ unsigned int CUDA::getGPUElement(unsigned int * vec, unsigned int index){
 
     return out;
 }
-#include "kernalfile.hpp"
+#include "kernalfile.hpp" 
+
+__device__ double atomic_Add(double* address, double val)
+{
+    unsigned long long int* address_as_ull = (unsigned long long int*)address;
+    unsigned long long int old = *address_as_ull, assumed;
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed,
+                __double_as_longlong(val + __longlong_as_double(assumed)));
+    } while (assumed != old);
+    return __longlong_as_double(old);
+}
 
 __device__ void vectorSub(double * v1, double * v2, double * vOut){
     
@@ -224,6 +307,35 @@ __device__ void cross(double *a,double *b, double *c) {
     (*c)     = (*(a+1)) * (*(b+2)) - (*(a+2)) * (*(b+1));
     (*(c+1)) = (*(b)) * (*(a+2)) - (*(a)) * (*(b+2));
     (*(c+2)) = (*(a)) * (*(b+1)) - (*(b)) * (*(a+1));
+}
+__device__ void cross3(double *a,double *b, double *c,int k) {
+	if (k == 0){
+    	(*c)     = (*(a+1)) * (*(b+2)) - (*(a+2)) * (*(b+1));
+	}
+	if (k == 1){
+    	(*(c+1)) = (*(b)) * (*(a+2)) - (*(a)) * (*(b+2));
+	}
+	if (k == 2){
+    	(*(c+2)) = (*(a)) * (*(b+1)) - (*(b)) * (*(a+1));
+	}
+}
+
+__device__ double cross3oneComp(double *a,double *b,int k) {
+	if (k == 0){
+    	//return (*(a+1)) * (*(b+2)) - (*(a+2)) * (*(b+1));
+		return a[1]*b[2]-a[2]*b[1];
+		
+	}
+	if (k == 1){
+    	//return (*(b)) * (*(a+2)) - (*(a)) * (*(b+2));
+		return a[2]*b[0]-a[0]*b[2];
+	}
+	if (k == 2){
+    	//return (*(a)) * (*(b+1)) - (*(b)) * (*(a+1));
+		return a[0]*b[1]-a[1]*b[0];
+	}
+	
+	return 0;
 }
 
 __device__ double dot(double *a, double *b) {
@@ -353,7 +465,6 @@ __global__ void areaGradient(double* gradAFacet, unsigned int* facets,double* ve
         // each facet has 3 vertices with gradient each, so in total 9 numbers we write them down here;
         
         // or facet i this is the gradent vector for its 0th vertex 
-
         vecAssign(&gradAFacet[i*9],S011,1.0/(2 * norm(S01)));
 
         // reuse S0 
@@ -365,6 +476,112 @@ __global__ void areaGradient(double* gradAFacet, unsigned int* facets,double* ve
 
 }
 
+__global__ void areaGradient2(double* gradAVert, unsigned int* facets,double* verts, unsigned int numFacets){
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+
+    double S0[3];
+    double S1[3];
+    double S01[3];
+    double S010[3];
+    double S011[3];
+
+    if (i<numFacets){
+        vectorSub(&verts[facets[i*3+1]*3], &verts[facets[i*3]*3],S0);
+        vectorSub(&verts[facets[i*3+2]*3], &verts[facets[i*3+1]*3],S1);
+        cross(S0,S1,S01);
+        cross(S01,S0,S010);
+        cross(S01,S1,S011);
+        // each facet has 3 vertices with gradient each, so in total 9 numbers we write them down here;
+        
+        // or facet i this is the gradent vector for its 0th vertex 
+        vectorAdd(S011,S010,S0);
+		double Norm2inv = 1.0/(2.0*norm(S01));
+		for (int j=0; j<3;j++){
+			atomic_Add(&gradAVert[facets[i*3]*3+j],S011[j]*Norm2inv);
+			atomic_Add(&gradAVert[facets[i*3+1]*3+j],-S0[j]*Norm2inv);
+			atomic_Add(&gradAVert[facets[i*3+2]*3+j],S010[j]*Norm2inv);
+		}
+
+
+
+				// 		gradAVert[facets[i*3+1]*3]  -=S0[0]*Norm2inv;
+		// 		gradAVert[facets[i*3+1]*3+1]-=S0[1]*Norm2inv;
+		// 		gradAVert[facets[i*3+1]*3+2]-=S0[2]*Norm2inv;
+
+						// 		gradAVert[facets[i*3+2]*3]  +=S010[0]*Norm2inv;
+		// 		gradAVert[facets[i*3+2]*3+1]+=S010[1]*Norm2inv;
+		// 		gradAVert[facets[i*3+2]*3+2]+=S010[2]*Norm2inv;
+
+
+
+		// for (int ii = 0; ii<=maxAdd; ii++){
+		// 	 __syncthreads(); // problem is that this is a local sync got a global one, we really should be doing a global one here
+		// 	if (addOrder[i*3]==ii){
+				
+		// 		gradAVert[facets[i*3]*3]  +=S011[0]*Norm2inv;
+		// 		gradAVert[facets[i*3]*3+1]+=S011[1]*Norm2inv;
+		// 		gradAVert[facets[i*3]*3+2]+=S011[2]*Norm2inv;
+		// 		if (facets[i*3]==VERTTOCHECK){
+		// 			printf("adding {%f,%f,%f} from facet %d i am %d in the add order\t",S011[0]*Norm2inv,S011[1]*Norm2inv,S011[2]*Norm2inv,i,addOrder[i*3]);
+		// 			printf("got {%f,%f,%f}\n",gradAVert[0+3*VERTTOCHECK],gradAVert[1+3*VERTTOCHECK],gradAVert[2+3*VERTTOCHECK]);
+		// 		}
+				
+		// 	}
+		// 	if (addOrder[i*3+1]==ii){
+		// 		gradAVert[facets[i*3+1]*3]  -=S0[0]*Norm2inv;
+		// 		gradAVert[facets[i*3+1]*3+1]-=S0[1]*Norm2inv;
+		// 		gradAVert[facets[i*3+1]*3+2]-=S0[2]*Norm2inv;
+		// 		if (facets[i*3+1]==VERTTOCHECK){
+		// 			printf("adding {%f,%f,%f} from facet %d i am %d in the add order\t",S0[0]*Norm2inv,S0[1]*Norm2inv,S0[2]*Norm2inv,i,addOrder[i*3+2]);
+		// 			printf("got {%f,%f,%f}\n",gradAVert[0+3*VERTTOCHECK],gradAVert[1+3*VERTTOCHECK],gradAVert[2+3*VERTTOCHECK]);
+		// 		}
+		// 	}
+		// 	if (addOrder[i*3+2]==ii){
+		// 		gradAVert[facets[i*3+2]*3]  +=S010[0]*Norm2inv;
+		// 		gradAVert[facets[i*3+2]*3+1]+=S010[1]*Norm2inv;
+		// 		gradAVert[facets[i*3+2]*3+2]+=S010[2]*Norm2inv;
+		// 		if (facets[i*3+2]==VERTTOCHECK){
+		// 			printf("adding {%f,%f,%f} from facet %d i am %d in the add order\t",S010[0]*Norm2inv,S010[1]*Norm2inv,S010[2]*Norm2inv,i,addOrder[i*3+2]);
+		// 			printf("got {%f,%f,%f}\n",gradAVert[0+3*VERTTOCHECK],gradAVert[1+3*VERTTOCHECK],gradAVert[2+3*VERTTOCHECK]);
+		// 		}
+		// 	}
+		// }
+    }
+
+}
+__global__ void areaGradient3(double* gradAVert, unsigned int* facets,double* verts, unsigned int numFacets){
+    int i = blockDim.x * blockIdx.x + threadIdx.x; //which facet is calculating
+	//int j = threadIdx.y; // which vertex on this facet are we calculating for
+	int k = threadIdx.y; // which (x,y,z) compoent of the vertex are we calculating
+    
+	extern __shared__ double sdata[]; // need 5x3xblocksize double for the whole block; I.E each thread in the block needs 5 3 vectors
+    double *S0 = sdata+5*3*threadIdx.x;
+    double *S1 = S0+3;
+    double *S01 = S1+3;
+    double *S010 = S01+3;
+    double *S011 = S010+3;
+
+    if (i<numFacets){
+		S0[k] = verts[facets[i*3+1]*3+k] - verts[facets[i*3]*3+k];
+		S1[k] = verts[facets[i*3+2]*3+k] - verts[facets[i*3+1]*3+k];
+		__syncthreads();
+
+		cross3(S0,S1,S01,k);
+		__syncthreads();
+        
+		cross3(S01,S0,S010,k);
+        cross3(S01,S1,S011,k);
+		__syncthreads();
+        S0[k] = S011[k]+S010[k];
+        __syncthreads();
+		// hmmm this is pretty in effiecnt 
+        // or facet i this is the gradent vector for its 0th vertex 
+		double Norm2inv = 1.0/(2.0*norm(S01));
+		atomic_Add(&gradAVert[facets[i*3]*3+k],S011[k]*Norm2inv);
+		atomic_Add(&gradAVert[facets[i*3+1]*3+k],-S0[k]*Norm2inv);
+		atomic_Add(&gradAVert[facets[i*3+2]*3+k],S010[k]*Norm2inv);
+	}
+}
 
 __global__ void volumeGradient(double* gradVFacet, unsigned int* facets,double* verts,unsigned int numFacets){
     // TO DO: this can this can be broken up into 3 for even faster computaiton
@@ -386,17 +603,90 @@ __global__ void volumeGradient(double* gradVFacet, unsigned int* facets,double* 
     }
 
 }
+
+__global__ void volumeGradient2(double* gradVVert, unsigned int* facets,double* verts,unsigned int numFacets){
+    // TO DO: this can this can be broken up into 3 for even faster computaiton
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    double a[3];
+	double b[3];
+	double c[3];
+    double s = 1;
+    if (i<numFacets){
+        cross(&verts[facets[i*3]*3],&verts[facets[i*3+1]*3],c);
+        s = sign(dot(c,&verts[facets[i*3+2]*3]));
+		//printf("facet %d, s = %f, c= {%f,%f,%f}\n",i,s,c[0],c[1],c[2]);
+        cross(&verts[facets[i*3+1]*3],&verts[facets[i*3+2]*3],a);
+        cross(&verts[facets[i*3+2]*3],&verts[facets[i*3]*3],b);
+        cross(&verts[facets[i*3]*3],&verts[facets[i*3+1]*3],c);
+
+		for (int j=0; j<3;j++){
+			atomic_Add(&gradVVert[facets[i*3]*3+j],a[j]*s/6);
+			// if (a[j]*s/6>1e-6){
+			// printf("I am Facet %d, place %d, component %d and my term is %f I have added to vertex %d it is now %f\n",i,0,j,a[j]*s/6,facets[i*3],gradVVert[facets[i*3]*3+j]);
+			// }
+
+			atomic_Add(&gradVVert[facets[i*3+1]*3+j],b[j]*s/6);
+			// if (b[j]*s/6>1e-6){
+			// printf("I am Facet %d, place %d, component %d and my term is %f I have added to vertex %d it is now %f\n",i,1,j,b[j]*s/6,facets[i*3+1],gradVVert[facets[i*3+1]*3+j]);
+			// }
+
+			atomic_Add(&gradVVert[facets[i*3+2]*3+j],c[j]*s/6);
+			// if (c[j]*s/6>1e-6){
+			// printf("I am Facet %d, place %d, component %d and my term is %f I have added to vertex %d it is now %f\n",i,2,j,c[j]*s/6,facets[i*3+2],gradVVert[facets[i*3+2]*3+j]);
+			// }
+
+		}
+    }
+
+}
+__global__ void volumeGradient3(double* gradVVert, unsigned int* facets,double* verts,unsigned int numFacets){
+    // TO DO: this can this can be broken up into 3 for even faster computaiton
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+	int j = threadIdx.y; // which vertex on this facet are we calculating for
+	int k = threadIdx.z; // which (x,y,z) compoent of the vertex are we calculating
+	extern __shared__ double sdata[]; // just one piece of data per facet
+	// lets load the 3 vectors into shared data frist so now we need 10 data per facet
+	if (j ==0 && k ==0) sdata[threadIdx.x] = 0;
+
+	__syncthreads();
+
+
+	double term; 
+    
+	double s = 1;
+
+
+
+    if (i<numFacets){
+		if (j==0){
+        	term = cross3oneComp(&verts[facets[i*3]*3],&verts[facets[i*3+1]*3],k);
+			// now take the sign of c dotted with &verts[facets[i*3+2]*3]
+			atomic_Add(&sdata[threadIdx.x],term*verts[facets[i*3+2]*3+k]);
+		}
+	}
+	__syncthreads();
+
+    if (i<numFacets){
+
+        s = sign(sdata[threadIdx.x]);
+		term = cross3oneComp(&verts[facets[i*3+(j+1)%3]*3],&verts[facets[i*3+(j+2)%3]*3],k);
+
+		atomic_Add(&gradVVert[facets[i*3+j]*3+k],term*s/6.0);
+	}
+}
+		
+
 __global__ void facetToVertex(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart,unsigned int numVert){
     
     int i = blockDim.x * blockIdx.x + threadIdx.x;
+	int j = threadIdx.y;
 
     if (i<numVert){
         //first set to 0
-        vertexValue[i*3] = 0;
-        vertexValue[i*3 + 1] = 0;
-        vertexValue[i*3 + 2] = 0;
+        vertexValue[i*3 + j] = 0;
         for (int index = vertIndexStart[i]; index < vertIndexStart[i+1]; index++){
-            vectorAdd(&vertexValue[i*3],&facetValue[3*vertToFacet[index]],&vertexValue[i*3]);
+			vertexValue[i*3+j]+=facetValue[3*vertToFacet[index]+j];
+            //vectorAdd(&vertexValue[i*3],&facetValue[3*vertToFacet[index]],&vertexValue[i*3]);
             //printf("vertex %d gets [%f,%f,%f]\n",i,facetValue[3*vertToFacet[index]],facetValue[3*vertToFacet[index]+1],facetValue[3*vertToFacet[index]+2]);
         }
     }

@@ -30,6 +30,10 @@ public:
     virtual void volume_gradient(UniqueDevicePtr<double>* gradVFacet,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets) = 0;
     virtual void area(UniqueDevicePtr<double>* area, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets) = 0;
     virtual void volume(UniqueDevicePtr<double>* volume, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets) = 0;
+	virtual void area_gradient2(UniqueDevicePtr<double>* gradAVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert) = 0;
+    virtual void volume_gradient2(UniqueDevicePtr<double>* gradVVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert) = 0;
+	virtual void area_gradient3(UniqueDevicePtr<double>* gradAVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert) = 0;
+    virtual void volume_gradient3(UniqueDevicePtr<double>* gradVVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert) = 0;
 
 
 

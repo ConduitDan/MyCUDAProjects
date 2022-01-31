@@ -19,6 +19,7 @@ private:
 public:
     CUDA();
     CUDA(int blocksize);
+	~CUDA();
     //void* allocate(unsigned int size);
 	void allocate(void** ptr, unsigned int size);
     void copy_to_host(void * hostPointer, void * devicepointer, unsigned int size);
@@ -42,6 +43,13 @@ public:
 	void area_gradient(UniqueDevicePtr<double>* gradAFacet,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets);
     void volume_gradient(UniqueDevicePtr<double>* gradVFacet,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets);
     
+	void area_gradient2(UniqueDevicePtr<double>* gradAVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert);
+    void volume_gradient2(UniqueDevicePtr<double>* gradVVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert);
+
+	void area_gradient3(UniqueDevicePtr<double>* gradAVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert);
+    void volume_gradient3(UniqueDevicePtr<double>* gradVVert,UniqueDevicePtr<unsigned int>* facets,UniqueDevicePtr<double>* vert,unsigned int numFacets,unsigned int numVert);
+
+
 	void area(UniqueDevicePtr<double>* area, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets);
     void volume(UniqueDevicePtr<double>* volume, UniqueDevicePtr<double>* vert, UniqueDevicePtr<unsigned int>* facets, unsigned int numFacets);
 
@@ -53,13 +61,20 @@ public:
 
 
 
-
+	 // functionals
     __global__ void areaKernel(double * area, double * vert, unsigned int * facets, unsigned int numFacets);
     __global__ void volumeKernel(double * volume, double * vert, unsigned int * facets, unsigned int numFacets);
-    __global__ void addTree(double * in, double * out);
-    __global__ void addWithMultKernel(double *a ,double *b,double lambda, unsigned int size); // a += b * lambda
     __global__ void areaGradient(double* gradAFacet, unsigned int* facets,double* verts,unsigned int numFacets);
     __global__ void volumeGradient(double* gradVFacet, unsigned int* facets,double* verts,unsigned int numFacets);
+	__global__ void areaGradient2(double* gradAFacet, unsigned int* facets,double* verts,unsigned int numFacets);
+    __global__ void volumeGradient2(double* gradVFacet, unsigned int* facets,double* verts, unsigned int numFacets);
+	__global__ void areaGradient3(double* gradAFacet, unsigned int* facets,double* verts,unsigned int numFacets);
+    __global__ void volumeGradient3(double* gradVFacet, unsigned int* facets,double* verts, unsigned int numFacets);
+
+
+	// Linear algebra
+    __global__ void addTree(double * in, double * out);
+    __global__ void addWithMultKernel(double *a ,double *b,double lambda, unsigned int size); // a += b * lambda
     __global__ void facetToVertex(double* vertexValue, double* facetValue,unsigned int* vertToFacet, unsigned int* vertIndexStart,unsigned int numVert);
     __global__ void projectForce(double* force,double* gradAVert,double* gradVVert,double scale,unsigned int numEle);
     __global__ void elementMultiply(double* v1, double* v2, double* out, unsigned int size);

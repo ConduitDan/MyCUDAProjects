@@ -28,7 +28,7 @@ problem.addconstraint(lv)
 
 // Create the optimizer
 var opt = ShapeOptimizer(problem, m)
-
+opt.etol=1e-16 // Make this unfeasible small to turn off early exit
 // Perform the optimization
 opt.relax(Nsteps)
 //opt.conjugategradient(Nsteps)

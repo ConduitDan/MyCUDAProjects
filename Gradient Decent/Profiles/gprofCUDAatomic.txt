@@ -1,0 +1,923 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+  9.52      0.02     0.02  2457613     0.00     0.00  unsigned int* const& std::__get_helper<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> > const&)
+  9.52      0.04     0.02   537254     0.00     0.00  CUDA::cuda_sync_and_check(char const*)
+  9.52      0.06     0.02   104957     0.00     0.00  CUDA::sum_of_elements(UniqueDevicePtr<double>*, unsigned int, unsigned int)
+  9.52      0.08     0.02        1    20.00    40.00  DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*)
+  4.76      0.09     0.01   304867     0.00     0.00  std::ceil(float)
+  4.76      0.10     0.01    10000     0.00     0.00  CUDA::area_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int)
+  4.76      0.11     0.01        1    10.00    70.00  ShapeOptimizer::gradientDesent(int)
+  4.76      0.12     0.01                             cudart::cudaSurface::setStorage(bool)
+  4.76      0.13     0.01                             cudart::contextState::getEntryFunction(cudart::cudaEntryFunction**, void const*, cudaError)
+  4.76      0.14     0.01                             cudart::cudaApiMemcpy(void*, void const*, unsigned long, cudaMemcpyKind)
+  4.76      0.15     0.01                             cudart::getGlobalState()
+  4.76      0.16     0.01                             cudart::cudaApiLaunchKernel(void const*, dim3, dim3, void**, unsigned long, CUstream_st*)
+  4.76      0.17     0.01                             cudart::cudaApiLaunchKernel_ptsz(void const*, dim3, dim3, void**, unsigned long, CUstream_st*)
+  4.76      0.18     0.01                             cudart::cuosInterlockedCompareExchange(unsigned int volatile*, unsigned int, unsigned int)
+  4.76      0.19     0.01                             cudaDeviceSynchronize
+  4.76      0.20     0.01                             cudaGetLastError
+  4.76      0.21     0.01                             cudaMemset
+  0.00      0.21     0.00  2457613     0.00     0.00  std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::get() const
+  0.00      0.21     0.00  2457613     0.00     0.00  std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_ptr() const
+  0.00      0.21     0.00  2457613     0.00     0.00  std::_Head_base<0ul, unsigned int*, false>::_M_head(std::_Head_base<0ul, unsigned int*, false> const&)
+  0.00      0.21     0.00  2457613     0.00     0.00  std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> > const&)
+  0.00      0.21     0.00  2457613     0.00     0.00  std::tuple_element<0ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type const& std::get<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> > const&)
+  0.00      0.21     0.00  2457610     0.00     0.00  std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::operator[](unsigned long) const
+  0.00      0.21     0.00  1042033     0.00     0.00  UniqueDevicePtr<double>::get()
+  0.00      0.21     0.00   799646     0.00     0.00  dim3::dim3(unsigned int, unsigned int, unsigned int)
+  0.00      0.21     0.00   399823     0.00     0.00  cudaError cudaLaunchKernel<char>(char const*, dim3, dim3, void**, unsigned long, CUstream_st*)
+  0.00      0.21     0.00   209914     0.00     0.00  __device_stub__Z7addTreePdS_(double*, double*)
+  0.00      0.21     0.00   209914     0.00     0.00  addTree(double*, double*)
+  0.00      0.21     0.00   117429     0.00     0.00  DeviceMesh::get_numVert()
+  0.00      0.21     0.00   104962     0.00     0.00  UniqueDevicePtr<unsigned int>::get()
+  0.00      0.21     0.00   104959     0.00     0.00  CUDA::copy_to_host(void*, void*, unsigned int)
+  0.00      0.21     0.00    64952     0.00     0.00  DeviceMesh::get_vert()
+  0.00      0.21     0.00    52476     0.00     0.00  std::abs(double)
+  0.00      0.21     0.00    42479     0.00     0.00  volumeKernel(double*, double*, unsigned int*, unsigned int)
+  0.00      0.21     0.00    42479     0.00     0.00  __device_stub__Z12volumeKernelPdS_Pjj(double*, double*, unsigned int*, unsigned int)
+  0.00      0.21     0.00    42479     0.00     0.00  DeviceMesh::volume()
+  0.00      0.21     0.00    42479     0.00     0.00  CUDA::volume(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int)
+  0.00      0.21     0.00    42477     0.00     0.00  DeviceMesh::get_numFacets()
+  0.00      0.21     0.00    42476     0.00     0.00  elementMultiply(double*, double*, double*, unsigned int)
+  0.00      0.21     0.00    42476     0.00     0.00  __device_stub__Z15elementMultiplyPdS_S_j(double*, double*, double*, unsigned int)
+  0.00      0.21     0.00    42476     0.00     0.00  DeviceMesh::get_facets()
+  0.00      0.21     0.00    42476     0.00     0.00  CUDA::dotProduct(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, unsigned int)
+  0.00      0.21     0.00    32476     0.00     0.00  volumeGradient2(double*, unsigned int*, double*, unsigned int)
+  0.00      0.21     0.00    32476     0.00     0.00  addWithMultKernel(double*, double*, double, unsigned int)
+  0.00      0.21     0.00    32476     0.00     0.00  __device_stub__Z15volumeGradient2PdPjS_j(double*, unsigned int*, double*, unsigned int)
+  0.00      0.21     0.00    32476     0.00     0.00  __device_stub__Z17addWithMultKernelPdS_dj(double*, double*, double, unsigned int)
+  0.00      0.21     0.00    32476     0.00     0.00  CUDA::add_with_mult(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int)
+  0.00      0.21     0.00    32476     0.00     0.00  CUDA::volume_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int)
+  0.00      0.21     0.00    32476     0.00     0.00  Gradient::calc_gradV()
+  0.00      0.21     0.00    22476     0.00     0.00  Gradient::reproject(double)
+  0.00      0.21     0.00    20002     0.00     0.00  areaKernel(double*, double*, unsigned int*, unsigned int)
+  0.00      0.21     0.00    20002     0.00     0.00  __device_stub__Z10areaKernelPdS_Pjj(double*, double*, unsigned int*, unsigned int)
+  0.00      0.21     0.00    20002     0.00     0.00  DeviceMesh::area()
+  0.00      0.21     0.00    20002     0.00     0.00  CUDA::area(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int)
+  0.00      0.21     0.00    10000     0.00     0.00  projectForce(double*, double*, double*, double, unsigned int)
+  0.00      0.21     0.00    10000     0.00     0.00  areaGradient2(double*, unsigned int*, double*, unsigned int)
+  0.00      0.21     0.00    10000     0.00     0.00  __device_stub__Z12projectForcePdS_S_dj(double*, double*, double*, double, unsigned int)
+  0.00      0.21     0.00    10000     0.00     0.00  __device_stub__Z13areaGradient2PdPjS_j(double*, unsigned int*, double*, unsigned int)
+  0.00      0.21     0.00    10000     0.00     0.00  DeviceMesh::decend_gradient(Gradient*, double)
+  0.00      0.21     0.00    10000     0.00     0.01  ShapeOptimizer::gradientDesentStep()
+  0.00      0.21     0.00    10000     0.00     0.00  ShapeOptimizer::reproject_constraints()
+  0.00      0.21     0.00    10000     0.00     0.00  CUDA::project_force(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int)
+  0.00      0.21     0.00    10000     0.00     0.00  Gradient::calc_force()
+  0.00      0.21     0.00    10000     0.00     0.00  Gradient::calc_gradA()
+  0.00      0.21     0.00    10000     0.00     0.00  Gradient::project_to_force()
+  0.00      0.21     0.00    10000     0.00     0.00  Gradient::get_force()
+  0.00      0.21     0.00       18     0.00     0.00  UniqueDevicePtr<double>::UniqueDevicePtr(DeviceAPI*)
+  0.00      0.21     0.00       18     0.00     0.00  UniqueDevicePtr<double>::~UniqueDevicePtr()
+  0.00      0.21     0.00       13     0.00     0.00  CUDA::deallocate(void*)
+  0.00      0.21     0.00       13     0.00     0.00  CUDA::allocate(void**, unsigned int)
+  0.00      0.21     0.00        9     0.00     0.00  UniqueDevicePtr<double>::allocate(int)
+  0.00      0.21     0.00        8     0.00     0.00  UniqueDevicePtr<unsigned int>::UniqueDevicePtr(DeviceAPI*)
+  0.00      0.21     0.00        8     0.00     0.00  UniqueDevicePtr<unsigned int>::~UniqueDevicePtr()
+  0.00      0.21     0.00        8     0.00     0.00  std::_Head_base<0ul, unsigned int*, false>::_M_head(std::_Head_base<0ul, unsigned int*, false>&)
+  0.00      0.21     0.00        8     0.00     0.00  std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >&)
+  0.00      0.21     0.00        8     0.00     0.00  std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_ptr()
+  0.00      0.21     0.00        8     0.00     0.00  unsigned int*& std::__get_helper<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >&)
+  0.00      0.21     0.00        8     0.00     0.00  std::tuple_element<0ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type& std::get<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> >&)
+  0.00      0.21     0.00        5     0.00     0.00  CUDA::copy_to_device(void*, void*, unsigned int)
+  0.00      0.21     0.00        4     0.00     0.00  UniqueDevicePtr<unsigned int>::allocate(int)
+  0.00      0.21     0.00        4     0.00     0.00  std::enable_if<std::is_convertible<unsigned int (*) [], unsigned int (*) []>::value, void>::type std::default_delete<unsigned int []>::operator()<unsigned int>(unsigned int*) const
+  0.00      0.21     0.00        4     0.00     0.00  std::_Head_base<0ul, unsigned int*, false>::_Head_base()
+  0.00      0.21     0.00        4     0.00     0.00  std::_Head_base<1ul, std::default_delete<unsigned int []>, true>::_M_head(std::_Head_base<1ul, std::default_delete<unsigned int []>, true>&)
+  0.00      0.21     0.00        4     0.00     0.00  std::_Head_base<1ul, std::default_delete<unsigned int []>, true>::_Head_base()
+  0.00      0.21     0.00        4     0.00     0.00  std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::get_deleter()
+  0.00      0.21     0.00        4     0.00     0.00  std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::unique_ptr<unsigned int*, std::default_delete<unsigned int []>, void, bool>(unsigned int*)
+  0.00      0.21     0.00        4     0.00     0.00  std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::~unique_ptr()
+  0.00      0.21     0.00        4     0.00     0.00  std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_Tuple_impl()
+  0.00      0.21     0.00        4     0.00     0.00  std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >&)
+  0.00      0.21     0.00        4     0.00     0.00  std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >::_Tuple_impl()
+  0.00      0.21     0.00        4     0.00     0.00  std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_deleter()
+  0.00      0.21     0.00        4     0.00     0.00  std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::__uniq_ptr_impl(unsigned int*)
+  0.00      0.21     0.00        4     0.00     0.00  std::tuple<unsigned int*, std::default_delete<unsigned int []> >::tuple<unsigned int*, std::default_delete<unsigned int []>, true>()
+  0.00      0.21     0.00        4     0.00     0.00  std::default_delete<unsigned int []>& std::__get_helper<1ul, std::default_delete<unsigned int []>>(std::_Tuple_impl<1ul, std::default_delete<unsigned int []>>&)
+  0.00      0.21     0.00        4     0.00     0.00  std::tuple_element<1ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type& std::get<1ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> >&)
+  0.00      0.21     0.00        3     0.00     0.00  DeviceAPI::get_blockSize()
+  0.00      0.21     0.00        2     0.00     0.00  Mesh::get_facets()
+  0.00      0.21     0.00        2     0.00     0.00  Mesh::~Mesh()
+  0.00      0.21     0.00        1     0.00     0.00  ____nv_dummy_param_ref(void*)
+  0.00      0.21     0.00        1     0.00     0.00  __sti____cudaRegisterAll()
+  0.00      0.21     0.00        1     0.00     0.00  __nv_cudaEntityRegisterCallback(void**)
+  0.00      0.21     0.00        1     0.00     0.00  __nv_save_fatbinhandle_for_managed_rt(void**)
+  0.00      0.21     0.00        1     0.00     0.00  APIFactory::get_API(int)
+  0.00      0.21     0.00        1     0.00     0.00  DeviceMesh::copy_to_host()
+  0.00      0.21     0.00        1     0.00     0.00  DeviceMesh::~DeviceMesh()
+  0.00      0.21     0.00        1     0.00     0.00  ShapeOptimizer::printMesh(char const*)
+  0.00      0.21     0.00        1     0.00    40.00  ShapeOptimizer::ShapeOptimizer(char const*)
+  0.00      0.21     0.00        1     0.00     0.00  ShapeOptimizer::~ShapeOptimizer()
+  0.00      0.21     0.00        1     0.00     0.00  CUDA::CUDA(int)
+  0.00      0.21     0.00        1     0.00     0.00  Mesh::get_numVert()
+  0.00      0.21     0.00        1     0.00     0.00  Mesh::getNumFacets(_IO_FILE*)
+  0.00      0.21     0.00        1     0.00     0.00  Mesh::get_numFacets()
+  0.00      0.21     0.00        1     0.00     0.00  Mesh::getNumVertices(_IO_FILE*)
+  0.00      0.21     0.00        1     0.00     0.00  Mesh::load_mesh_from_file(char const*)
+  0.00      0.21     0.00        1     0.00     0.00  Mesh::print(char const*)
+  0.00      0.21     0.00        1     0.00     0.00  Mesh::get_vert()
+  0.00      0.21     0.00        1     0.00     0.00  Mesh::Mesh(char const*)
+  0.00      0.21     0.00        1     0.00     0.00  Mesh::Mesh(unsigned int, unsigned int, double*, unsigned int*)
+  0.00      0.21     0.00        1     0.00     0.00  Gradient::Gradient(DeviceMesh*, DeviceAPI*)
+  0.00      0.21     0.00        1     0.00     0.00  Gradient::~Gradient()
+  0.00      0.21     0.00        1     0.00     0.00  DeviceAPI::DeviceAPI(unsigned int)
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 2 byte(s) for 4.76% of 0.21 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]     52.4    0.00    0.11                 main [1]
+                0.01    0.06       1/1           ShapeOptimizer::gradientDesent(int) [2]
+                0.00    0.04       1/1           ShapeOptimizer::ShapeOptimizer(char const*) [4]
+                0.00    0.00       1/1           ShapeOptimizer::printMesh(char const*) [388]
+                0.00    0.00       1/1           ShapeOptimizer::~ShapeOptimizer() [389]
+-----------------------------------------------
+                0.01    0.06       1/1           main [1]
+[2]     33.3    0.01    0.06       1         ShapeOptimizer::gradientDesent(int) [2]
+                0.00    0.05   10000/10000       ShapeOptimizer::gradientDesentStep() [3]
+                0.00    0.00   10002/42479       DeviceMesh::volume() [16]
+                0.00    0.00   10002/20002       DeviceMesh::area() [32]
+                0.00    0.00   10000/52476       std::abs(double) [331]
+-----------------------------------------------
+                0.00    0.05   10000/10000       ShapeOptimizer::gradientDesent(int) [2]
+[3]     24.9    0.00    0.05   10000         ShapeOptimizer::gradientDesentStep() [3]
+                0.00    0.03   10000/10000       ShapeOptimizer::reproject_constraints() [7]
+                0.00    0.02   10000/10000       Gradient::calc_force() [8]
+                0.00    0.00   10000/20002       DeviceMesh::area() [32]
+                0.00    0.00   10000/10000       DeviceMesh::decend_gradient(Gradient*, double) [39]
+-----------------------------------------------
+                0.00    0.04       1/1           main [1]
+[4]     19.0    0.00    0.04       1         ShapeOptimizer::ShapeOptimizer(char const*) [4]
+                0.02    0.02       1/1           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+                0.00    0.00       1/42479       DeviceMesh::volume() [16]
+                0.00    0.00       1/1           APIFactory::get_API(int) [385]
+                0.00    0.00       1/1           Mesh::Mesh(char const*) [398]
+                0.00    0.00       1/1           Gradient::Gradient(DeviceMesh*, DeviceAPI*) [400]
+-----------------------------------------------
+                0.02    0.02       1/1           ShapeOptimizer::ShapeOptimizer(char const*) [4]
+[5]     19.0    0.02    0.02       1         DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+                0.00    0.02 2457610/2457610     std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::operator[](unsigned long) const [14]
+                0.00    0.00       1/304867      std::ceil(float) [23]
+                0.00    0.00       3/2457613     std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::get() const [9]
+                0.00    0.00       8/8           UniqueDevicePtr<unsigned int>::UniqueDevicePtr(DeviceAPI*) [354]
+                0.00    0.00       6/18          UniqueDevicePtr<double>::UniqueDevicePtr(DeviceAPI*) [349]
+                0.00    0.00       5/5           CUDA::copy_to_device(void*, void*, unsigned int) [361]
+                0.00    0.00       4/8           UniqueDevicePtr<unsigned int>::~UniqueDevicePtr() [355]
+                0.00    0.00       4/4           std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::unique_ptr<unsigned int*, std::default_delete<unsigned int []>, void, bool>(unsigned int*) [368]
+                0.00    0.00       4/4           UniqueDevicePtr<unsigned int>::allocate(int) [362]
+                0.00    0.00       4/104962      UniqueDevicePtr<unsigned int>::get() [328]
+                0.00    0.00       4/4           std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::~unique_ptr() [369]
+                0.00    0.00       3/18          UniqueDevicePtr<double>::~UniqueDevicePtr() [350]
+                0.00    0.00       3/9           UniqueDevicePtr<double>::allocate(int) [353]
+                0.00    0.00       2/2           Mesh::get_facets() [379]
+                0.00    0.00       1/1           Mesh::get_numFacets() [393]
+                0.00    0.00       1/1           Mesh::get_numVert() [391]
+                0.00    0.00       1/3           DeviceAPI::get_blockSize() [378]
+                0.00    0.00       1/1           Mesh::get_vert() [397]
+                0.00    0.00       1/1042033     UniqueDevicePtr<double>::get() [322]
+-----------------------------------------------
+                0.00    0.00   20002/104957      DeviceMesh::area() [32]
+                0.01    0.00   42476/104957      CUDA::dotProduct(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, unsigned int) [15]
+                0.01    0.00   42479/104957      DeviceMesh::volume() [16]
+[6]     14.9    0.02    0.01  104957         CUDA::sum_of_elements(UniqueDevicePtr<double>*, unsigned int, unsigned int) [6]
+                0.01    0.00  209914/537254      CUDA::cuda_sync_and_check(char const*) [13]
+                0.00    0.00  104957/304867      std::ceil(float) [23]
+                0.00    0.00  524785/1042033     UniqueDevicePtr<double>::get() [322]
+                0.00    0.00  419828/799646      dim3::dim3(unsigned int, unsigned int, unsigned int) [323]
+                0.00    0.00  209914/209914      addTree(double*, double*) [326]
+                0.00    0.00  104957/104959      CUDA::copy_to_host(void*, void*, unsigned int) [329]
+-----------------------------------------------
+                0.00    0.03   10000/10000       ShapeOptimizer::gradientDesentStep() [3]
+[7]     12.5    0.00    0.03   10000         ShapeOptimizer::reproject_constraints() [7]
+                0.00    0.01   32476/42479       DeviceMesh::volume() [16]
+                0.00    0.01   22476/22476       Gradient::reproject(double) [17]
+                0.00    0.00   32476/52476       std::abs(double) [331]
+-----------------------------------------------
+                0.00    0.02   10000/10000       ShapeOptimizer::gradientDesentStep() [3]
+[8]     10.3    0.00    0.02   10000         Gradient::calc_force() [8]
+                0.00    0.01   10000/10000       Gradient::calc_gradA() [19]
+                0.00    0.01   10000/10000       Gradient::project_to_force() [31]
+                0.00    0.00   10000/32476       Gradient::calc_gradV() [35]
+-----------------------------------------------
+                0.00    0.00       3/2457613     DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+                0.00    0.02 2457610/2457613     std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::operator[](unsigned long) const [14]
+[9]      9.5    0.00    0.02 2457613         std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::get() const [9]
+                0.00    0.02 2457613/2457613     std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_ptr() const [10]
+-----------------------------------------------
+                0.00    0.02 2457613/2457613     std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::get() const [9]
+[10]     9.5    0.00    0.02 2457613         std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_ptr() const [10]
+                0.00    0.02 2457613/2457613     std::tuple_element<0ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type const& std::get<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> > const&) [12]
+-----------------------------------------------
+                0.02    0.00 2457613/2457613     std::tuple_element<0ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type const& std::get<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> > const&) [12]
+[11]     9.5    0.02    0.00 2457613         unsigned int* const& std::__get_helper<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> > const&) [11]
+                0.00    0.00 2457613/2457613     std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> > const&) [321]
+-----------------------------------------------
+                0.00    0.02 2457613/2457613     std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_ptr() const [10]
+[12]     9.5    0.00    0.02 2457613         std::tuple_element<0ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type const& std::get<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> > const&) [12]
+                0.02    0.00 2457613/2457613     unsigned int* const& std::__get_helper<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> > const&) [11]
+-----------------------------------------------
+                0.00    0.00   10000/537254      CUDA::project_force(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [38]
+                0.00    0.00   20000/537254      CUDA::area_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [18]
+                0.00    0.00   20002/537254      CUDA::area(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [36]
+                0.00    0.00   64952/537254      CUDA::volume_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [34]
+                0.00    0.00   84958/537254      CUDA::volume(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [33]
+                0.00    0.00  127428/537254      CUDA::dotProduct(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, unsigned int) [15]
+                0.01    0.00  209914/537254      CUDA::sum_of_elements(UniqueDevicePtr<double>*, unsigned int, unsigned int) [6]
+[13]     9.5    0.02    0.00  537254         CUDA::cuda_sync_and_check(char const*) [13]
+-----------------------------------------------
+                0.00    0.02 2457610/2457610     DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+[14]     9.5    0.00    0.02 2457610         std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::operator[](unsigned long) const [14]
+                0.00    0.02 2457610/2457613     std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::get() const [9]
+-----------------------------------------------
+                0.00    0.01   20000/42476       Gradient::project_to_force() [31]
+                0.00    0.01   22476/42476       Gradient::reproject(double) [17]
+[15]     8.9    0.00    0.02   42476         CUDA::dotProduct(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, unsigned int) [15]
+                0.01    0.00   42476/104957      CUDA::sum_of_elements(UniqueDevicePtr<double>*, unsigned int, unsigned int) [6]
+                0.00    0.00  127428/537254      CUDA::cuda_sync_and_check(char const*) [13]
+                0.00    0.00   42476/304867      std::ceil(float) [23]
+                0.00    0.00  169904/1042033     UniqueDevicePtr<double>::get() [322]
+                0.00    0.00   84952/799646      dim3::dim3(unsigned int, unsigned int, unsigned int) [323]
+                0.00    0.00   42476/42476       elementMultiply(double*, double*, double*, unsigned int) [335]
+-----------------------------------------------
+                0.00    0.00       1/42479       ShapeOptimizer::ShapeOptimizer(char const*) [4]
+                0.00    0.00   10002/42479       ShapeOptimizer::gradientDesent(int) [2]
+                0.00    0.01   32476/42479       ShapeOptimizer::reproject_constraints() [7]
+[16]     8.2    0.00    0.02   42479         DeviceMesh::volume() [16]
+                0.01    0.00   42479/104957      CUDA::sum_of_elements(UniqueDevicePtr<double>*, unsigned int, unsigned int) [6]
+                0.00    0.00   42479/42479       CUDA::volume(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [33]
+-----------------------------------------------
+                0.00    0.01   22476/22476       ShapeOptimizer::reproject_constraints() [7]
+[17]     6.2    0.00    0.01   22476         Gradient::reproject(double) [17]
+                0.00    0.01   22476/42476       CUDA::dotProduct(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, unsigned int) [15]
+                0.00    0.00   22476/32476       Gradient::calc_gradV() [35]
+                0.00    0.00   22476/32476       CUDA::add_with_mult(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [37]
+                0.00    0.00   44952/117429      DeviceMesh::get_numVert() [327]
+                0.00    0.00   22476/64952       DeviceMesh::get_vert() [330]
+-----------------------------------------------
+                0.01    0.00   10000/10000       Gradient::calc_gradA() [19]
+[18]     5.3    0.01    0.00   10000         CUDA::area_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [18]
+                0.00    0.00   20000/537254      CUDA::cuda_sync_and_check(char const*) [13]
+                0.00    0.00   10000/304867      std::ceil(float) [23]
+                0.00    0.00   30000/1042033     UniqueDevicePtr<double>::get() [322]
+                0.00    0.00   20000/799646      dim3::dim3(unsigned int, unsigned int, unsigned int) [323]
+                0.00    0.00   10000/104962      UniqueDevicePtr<unsigned int>::get() [328]
+                0.00    0.00   10000/10000       areaGradient2(double*, unsigned int*, double*, unsigned int) [345]
+-----------------------------------------------
+                0.00    0.01   10000/10000       Gradient::calc_force() [8]
+[19]     5.3    0.00    0.01   10000         Gradient::calc_gradA() [19]
+                0.01    0.00   10000/10000       CUDA::area_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [18]
+                0.00    0.00   10000/117429      DeviceMesh::get_numVert() [327]
+                0.00    0.00   10000/42477       DeviceMesh::get_numFacets() [334]
+                0.00    0.00   10000/64952       DeviceMesh::get_vert() [330]
+                0.00    0.00   10000/42476       DeviceMesh::get_facets() [337]
+-----------------------------------------------
+                                                 <spontaneous>
+[20]     4.8    0.01    0.00                 cudaDeviceSynchronize [20]
+-----------------------------------------------
+                                                 <spontaneous>
+[21]     4.8    0.01    0.00                 cudaGetLastError [21]
+-----------------------------------------------
+                                                 <spontaneous>
+[22]     4.8    0.01    0.00                 cudaMemset [22]
+-----------------------------------------------
+                0.00    0.00       1/304867      DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+                0.00    0.00   10000/304867      CUDA::project_force(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [38]
+                0.00    0.00   10000/304867      CUDA::area_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [18]
+                0.00    0.00   10000/304867      DeviceMesh::decend_gradient(Gradient*, double) [39]
+                0.00    0.00   20002/304867      CUDA::area(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [36]
+                0.00    0.00   32476/304867      CUDA::volume_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [34]
+                0.00    0.00   32476/304867      CUDA::add_with_mult(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [37]
+                0.00    0.00   42476/304867      CUDA::dotProduct(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, unsigned int) [15]
+                0.00    0.00   42479/304867      CUDA::volume(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [33]
+                0.00    0.00  104957/304867      CUDA::sum_of_elements(UniqueDevicePtr<double>*, unsigned int, unsigned int) [6]
+[23]     4.8    0.01    0.00  304867         std::ceil(float) [23]
+-----------------------------------------------
+                                                 <spontaneous>
+[24]     4.8    0.01    0.00                 cudart::cudaSurface::setStorage(bool) [24]
+-----------------------------------------------
+                                                 <spontaneous>
+[25]     4.8    0.01    0.00                 cudart::contextState::getEntryFunction(cudart::cudaEntryFunction**, void const*, cudaError) [25]
+-----------------------------------------------
+                                                 <spontaneous>
+[26]     4.8    0.01    0.00                 cudart::cudaApiMemcpy(void*, void const*, unsigned long, cudaMemcpyKind) [26]
+-----------------------------------------------
+                                                 <spontaneous>
+[27]     4.8    0.01    0.00                 cudart::getGlobalState() [27]
+-----------------------------------------------
+                                                 <spontaneous>
+[28]     4.8    0.01    0.00                 cudart::cudaApiLaunchKernel(void const*, dim3, dim3, void**, unsigned long, CUstream_st*) [28]
+-----------------------------------------------
+                                                 <spontaneous>
+[29]     4.8    0.01    0.00                 cudart::cudaApiLaunchKernel_ptsz(void const*, dim3, dim3, void**, unsigned long, CUstream_st*) [29]
+-----------------------------------------------
+                                                 <spontaneous>
+[30]     4.8    0.01    0.00                 cudart::cuosInterlockedCompareExchange(unsigned int volatile*, unsigned int, unsigned int) [30]
+-----------------------------------------------
+                0.00    0.01   10000/10000       Gradient::calc_force() [8]
+[31]     4.5    0.00    0.01   10000         Gradient::project_to_force() [31]
+                0.00    0.01   20000/42476       CUDA::dotProduct(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, unsigned int) [15]
+                0.00    0.00   10000/10000       CUDA::project_force(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [38]
+                0.00    0.00   30000/117429      DeviceMesh::get_numVert() [327]
+                0.00    0.00   10000/52476       std::abs(double) [331]
+-----------------------------------------------
+                0.00    0.00   10000/20002       ShapeOptimizer::gradientDesentStep() [3]
+                0.00    0.00   10002/20002       ShapeOptimizer::gradientDesent(int) [2]
+[32]     3.5    0.00    0.01   20002         DeviceMesh::area() [32]
+                0.00    0.00   20002/104957      CUDA::sum_of_elements(UniqueDevicePtr<double>*, unsigned int, unsigned int) [6]
+                0.00    0.00   20002/20002       CUDA::area(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [36]
+-----------------------------------------------
+                0.00    0.00   42479/42479       DeviceMesh::volume() [16]
+[33]     2.2    0.00    0.00   42479         CUDA::volume(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [33]
+                0.00    0.00   84958/537254      CUDA::cuda_sync_and_check(char const*) [13]
+                0.00    0.00   42479/304867      std::ceil(float) [23]
+                0.00    0.00   84958/799646      dim3::dim3(unsigned int, unsigned int, unsigned int) [323]
+                0.00    0.00   84958/1042033     UniqueDevicePtr<double>::get() [322]
+                0.00    0.00   42479/104962      UniqueDevicePtr<unsigned int>::get() [328]
+                0.00    0.00   42479/42479       volumeKernel(double*, double*, unsigned int*, unsigned int) [332]
+-----------------------------------------------
+                0.00    0.00   32476/32476       Gradient::calc_gradV() [35]
+[34]     1.7    0.00    0.00   32476         CUDA::volume_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [34]
+                0.00    0.00   64952/537254      CUDA::cuda_sync_and_check(char const*) [13]
+                0.00    0.00   32476/304867      std::ceil(float) [23]
+                0.00    0.00   97428/1042033     UniqueDevicePtr<double>::get() [322]
+                0.00    0.00   64952/799646      dim3::dim3(unsigned int, unsigned int, unsigned int) [323]
+                0.00    0.00   32476/104962      UniqueDevicePtr<unsigned int>::get() [328]
+                0.00    0.00   32476/32476       volumeGradient2(double*, unsigned int*, double*, unsigned int) [338]
+-----------------------------------------------
+                0.00    0.00   10000/32476       Gradient::calc_force() [8]
+                0.00    0.00   22476/32476       Gradient::reproject(double) [17]
+[35]     1.7    0.00    0.00   32476         Gradient::calc_gradV() [35]
+                0.00    0.00   32476/32476       CUDA::volume_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [34]
+                0.00    0.00   32476/117429      DeviceMesh::get_numVert() [327]
+                0.00    0.00   32476/42477       DeviceMesh::get_numFacets() [334]
+                0.00    0.00   32476/64952       DeviceMesh::get_vert() [330]
+                0.00    0.00   32476/42476       DeviceMesh::get_facets() [337]
+-----------------------------------------------
+                0.00    0.00   20002/20002       DeviceMesh::area() [32]
+[36]     0.7    0.00    0.00   20002         CUDA::area(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [36]
+                0.00    0.00   20002/537254      CUDA::cuda_sync_and_check(char const*) [13]
+                0.00    0.00   20002/304867      std::ceil(float) [23]
+                0.00    0.00   40004/799646      dim3::dim3(unsigned int, unsigned int, unsigned int) [323]
+                0.00    0.00   40004/1042033     UniqueDevicePtr<double>::get() [322]
+                0.00    0.00   20002/104962      UniqueDevicePtr<unsigned int>::get() [328]
+                0.00    0.00   20002/20002       areaKernel(double*, double*, unsigned int*, unsigned int) [342]
+-----------------------------------------------
+                0.00    0.00   10000/32476       DeviceMesh::decend_gradient(Gradient*, double) [39]
+                0.00    0.00   22476/32476       Gradient::reproject(double) [17]
+[37]     0.5    0.00    0.00   32476         CUDA::add_with_mult(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [37]
+                0.00    0.00   32476/304867      std::ceil(float) [23]
+                0.00    0.00   64952/799646      dim3::dim3(unsigned int, unsigned int, unsigned int) [323]
+                0.00    0.00   64952/1042033     UniqueDevicePtr<double>::get() [322]
+                0.00    0.00   32476/32476       addWithMultKernel(double*, double*, double, unsigned int) [339]
+-----------------------------------------------
+                0.00    0.00   10000/10000       Gradient::project_to_force() [31]
+[38]     0.3    0.00    0.00   10000         CUDA::project_force(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [38]
+                0.00    0.00   10000/537254      CUDA::cuda_sync_and_check(char const*) [13]
+                0.00    0.00   10000/304867      std::ceil(float) [23]
+                0.00    0.00   30000/1042033     UniqueDevicePtr<double>::get() [322]
+                0.00    0.00   20000/799646      dim3::dim3(unsigned int, unsigned int, unsigned int) [323]
+                0.00    0.00   10000/10000       projectForce(double*, double*, double*, double, unsigned int) [344]
+-----------------------------------------------
+                0.00    0.00   10000/10000       ShapeOptimizer::gradientDesentStep() [3]
+[39]     0.3    0.00    0.00   10000         DeviceMesh::decend_gradient(Gradient*, double) [39]
+                0.00    0.00   10000/304867      std::ceil(float) [23]
+                0.00    0.00   10000/32476       CUDA::add_with_mult(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [37]
+                0.00    0.00   10000/10000       Gradient::get_force() [348]
+-----------------------------------------------
+                0.00    0.00 2457613/2457613     std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> > const&) [321]
+[320]    0.0    0.00    0.00 2457613         std::_Head_base<0ul, unsigned int*, false>::_M_head(std::_Head_base<0ul, unsigned int*, false> const&) [320]
+-----------------------------------------------
+                0.00    0.00 2457613/2457613     unsigned int* const& std::__get_helper<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> > const&) [11]
+[321]    0.0    0.00    0.00 2457613         std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> > const&) [321]
+                0.00    0.00 2457613/2457613     std::_Head_base<0ul, unsigned int*, false>::_M_head(std::_Head_base<0ul, unsigned int*, false> const&) [320]
+-----------------------------------------------
+                0.00    0.00       1/1042033     DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+                0.00    0.00       1/1042033     DeviceMesh::copy_to_host() [386]
+                0.00    0.00   30000/1042033     CUDA::project_force(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [38]
+                0.00    0.00   30000/1042033     CUDA::area_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [18]
+                0.00    0.00   40004/1042033     CUDA::area(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [36]
+                0.00    0.00   64952/1042033     CUDA::add_with_mult(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [37]
+                0.00    0.00   84958/1042033     CUDA::volume(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [33]
+                0.00    0.00   97428/1042033     CUDA::volume_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [34]
+                0.00    0.00  169904/1042033     CUDA::dotProduct(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, unsigned int) [15]
+                0.00    0.00  524785/1042033     CUDA::sum_of_elements(UniqueDevicePtr<double>*, unsigned int, unsigned int) [6]
+[322]    0.0    0.00    0.00 1042033         UniqueDevicePtr<double>::get() [322]
+-----------------------------------------------
+                0.00    0.00   20000/799646      CUDA::project_force(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [38]
+                0.00    0.00   20000/799646      CUDA::area_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [18]
+                0.00    0.00   40004/799646      CUDA::area(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [36]
+                0.00    0.00   64952/799646      CUDA::volume_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [34]
+                0.00    0.00   64952/799646      CUDA::add_with_mult(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [37]
+                0.00    0.00   84952/799646      CUDA::dotProduct(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, unsigned int) [15]
+                0.00    0.00   84958/799646      CUDA::volume(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [33]
+                0.00    0.00  419828/799646      CUDA::sum_of_elements(UniqueDevicePtr<double>*, unsigned int, unsigned int) [6]
+[323]    0.0    0.00    0.00  799646         dim3::dim3(unsigned int, unsigned int, unsigned int) [323]
+-----------------------------------------------
+                0.00    0.00   10000/399823      __device_stub__Z13areaGradient2PdPjS_j(double*, unsigned int*, double*, unsigned int) [347]
+                0.00    0.00   10000/399823      __device_stub__Z12projectForcePdS_S_dj(double*, double*, double*, double, unsigned int) [346]
+                0.00    0.00   20002/399823      __device_stub__Z10areaKernelPdS_Pjj(double*, double*, unsigned int*, unsigned int) [343]
+                0.00    0.00   32476/399823      __device_stub__Z17addWithMultKernelPdS_dj(double*, double*, double, unsigned int) [341]
+                0.00    0.00   32476/399823      __device_stub__Z15volumeGradient2PdPjS_j(double*, unsigned int*, double*, unsigned int) [340]
+                0.00    0.00   42476/399823      __device_stub__Z15elementMultiplyPdS_S_j(double*, double*, double*, unsigned int) [336]
+                0.00    0.00   42479/399823      __device_stub__Z12volumeKernelPdS_Pjj(double*, double*, unsigned int*, unsigned int) [333]
+                0.00    0.00  209914/399823      __device_stub__Z7addTreePdS_(double*, double*) [325]
+[324]    0.0    0.00    0.00  399823         cudaError cudaLaunchKernel<char>(char const*, dim3, dim3, void**, unsigned long, CUstream_st*) [324]
+-----------------------------------------------
+                0.00    0.00  209914/209914      addTree(double*, double*) [326]
+[325]    0.0    0.00    0.00  209914         __device_stub__Z7addTreePdS_(double*, double*) [325]
+                0.00    0.00  209914/399823      cudaError cudaLaunchKernel<char>(char const*, dim3, dim3, void**, unsigned long, CUstream_st*) [324]
+-----------------------------------------------
+                0.00    0.00  209914/209914      CUDA::sum_of_elements(UniqueDevicePtr<double>*, unsigned int, unsigned int) [6]
+[326]    0.0    0.00    0.00  209914         addTree(double*, double*) [326]
+                0.00    0.00  209914/209914      __device_stub__Z7addTreePdS_(double*, double*) [325]
+-----------------------------------------------
+                0.00    0.00       1/117429      Gradient::Gradient(DeviceMesh*, DeviceAPI*) [400]
+                0.00    0.00   10000/117429      Gradient::calc_gradA() [19]
+                0.00    0.00   30000/117429      Gradient::project_to_force() [31]
+                0.00    0.00   32476/117429      Gradient::calc_gradV() [35]
+                0.00    0.00   44952/117429      Gradient::reproject(double) [17]
+[327]    0.0    0.00    0.00  117429         DeviceMesh::get_numVert() [327]
+-----------------------------------------------
+                0.00    0.00       1/104962      DeviceMesh::copy_to_host() [386]
+                0.00    0.00       4/104962      DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+                0.00    0.00   10000/104962      CUDA::area_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [18]
+                0.00    0.00   20002/104962      CUDA::area(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [36]
+                0.00    0.00   32476/104962      CUDA::volume_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [34]
+                0.00    0.00   42479/104962      CUDA::volume(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [33]
+[328]    0.0    0.00    0.00  104962         UniqueDevicePtr<unsigned int>::get() [328]
+-----------------------------------------------
+                0.00    0.00       2/104959      DeviceMesh::copy_to_host() [386]
+                0.00    0.00  104957/104959      CUDA::sum_of_elements(UniqueDevicePtr<double>*, unsigned int, unsigned int) [6]
+[329]    0.0    0.00    0.00  104959         CUDA::copy_to_host(void*, void*, unsigned int) [329]
+-----------------------------------------------
+                0.00    0.00   10000/64952       Gradient::calc_gradA() [19]
+                0.00    0.00   22476/64952       Gradient::reproject(double) [17]
+                0.00    0.00   32476/64952       Gradient::calc_gradV() [35]
+[330]    0.0    0.00    0.00   64952         DeviceMesh::get_vert() [330]
+-----------------------------------------------
+                0.00    0.00   10000/52476       ShapeOptimizer::gradientDesent(int) [2]
+                0.00    0.00   10000/52476       Gradient::project_to_force() [31]
+                0.00    0.00   32476/52476       ShapeOptimizer::reproject_constraints() [7]
+[331]    0.0    0.00    0.00   52476         std::abs(double) [331]
+-----------------------------------------------
+                0.00    0.00   42479/42479       CUDA::volume(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [33]
+[332]    0.0    0.00    0.00   42479         volumeKernel(double*, double*, unsigned int*, unsigned int) [332]
+                0.00    0.00   42479/42479       __device_stub__Z12volumeKernelPdS_Pjj(double*, double*, unsigned int*, unsigned int) [333]
+-----------------------------------------------
+                0.00    0.00   42479/42479       volumeKernel(double*, double*, unsigned int*, unsigned int) [332]
+[333]    0.0    0.00    0.00   42479         __device_stub__Z12volumeKernelPdS_Pjj(double*, double*, unsigned int*, unsigned int) [333]
+                0.00    0.00   42479/399823      cudaError cudaLaunchKernel<char>(char const*, dim3, dim3, void**, unsigned long, CUstream_st*) [324]
+-----------------------------------------------
+                0.00    0.00       1/42477       Gradient::Gradient(DeviceMesh*, DeviceAPI*) [400]
+                0.00    0.00   10000/42477       Gradient::calc_gradA() [19]
+                0.00    0.00   32476/42477       Gradient::calc_gradV() [35]
+[334]    0.0    0.00    0.00   42477         DeviceMesh::get_numFacets() [334]
+-----------------------------------------------
+                0.00    0.00   42476/42476       CUDA::dotProduct(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, unsigned int) [15]
+[335]    0.0    0.00    0.00   42476         elementMultiply(double*, double*, double*, unsigned int) [335]
+                0.00    0.00   42476/42476       __device_stub__Z15elementMultiplyPdS_S_j(double*, double*, double*, unsigned int) [336]
+-----------------------------------------------
+                0.00    0.00   42476/42476       elementMultiply(double*, double*, double*, unsigned int) [335]
+[336]    0.0    0.00    0.00   42476         __device_stub__Z15elementMultiplyPdS_S_j(double*, double*, double*, unsigned int) [336]
+                0.00    0.00   42476/399823      cudaError cudaLaunchKernel<char>(char const*, dim3, dim3, void**, unsigned long, CUstream_st*) [324]
+-----------------------------------------------
+                0.00    0.00   10000/42476       Gradient::calc_gradA() [19]
+                0.00    0.00   32476/42476       Gradient::calc_gradV() [35]
+[337]    0.0    0.00    0.00   42476         DeviceMesh::get_facets() [337]
+-----------------------------------------------
+                0.00    0.00   32476/32476       CUDA::volume_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [34]
+[338]    0.0    0.00    0.00   32476         volumeGradient2(double*, unsigned int*, double*, unsigned int) [338]
+                0.00    0.00   32476/32476       __device_stub__Z15volumeGradient2PdPjS_j(double*, unsigned int*, double*, unsigned int) [340]
+-----------------------------------------------
+                0.00    0.00   32476/32476       CUDA::add_with_mult(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [37]
+[339]    0.0    0.00    0.00   32476         addWithMultKernel(double*, double*, double, unsigned int) [339]
+                0.00    0.00   32476/32476       __device_stub__Z17addWithMultKernelPdS_dj(double*, double*, double, unsigned int) [341]
+-----------------------------------------------
+                0.00    0.00   32476/32476       volumeGradient2(double*, unsigned int*, double*, unsigned int) [338]
+[340]    0.0    0.00    0.00   32476         __device_stub__Z15volumeGradient2PdPjS_j(double*, unsigned int*, double*, unsigned int) [340]
+                0.00    0.00   32476/399823      cudaError cudaLaunchKernel<char>(char const*, dim3, dim3, void**, unsigned long, CUstream_st*) [324]
+-----------------------------------------------
+                0.00    0.00   32476/32476       addWithMultKernel(double*, double*, double, unsigned int) [339]
+[341]    0.0    0.00    0.00   32476         __device_stub__Z17addWithMultKernelPdS_dj(double*, double*, double, unsigned int) [341]
+                0.00    0.00   32476/399823      cudaError cudaLaunchKernel<char>(char const*, dim3, dim3, void**, unsigned long, CUstream_st*) [324]
+-----------------------------------------------
+                0.00    0.00   20002/20002       CUDA::area(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [36]
+[342]    0.0    0.00    0.00   20002         areaKernel(double*, double*, unsigned int*, unsigned int) [342]
+                0.00    0.00   20002/20002       __device_stub__Z10areaKernelPdS_Pjj(double*, double*, unsigned int*, unsigned int) [343]
+-----------------------------------------------
+                0.00    0.00   20002/20002       areaKernel(double*, double*, unsigned int*, unsigned int) [342]
+[343]    0.0    0.00    0.00   20002         __device_stub__Z10areaKernelPdS_Pjj(double*, double*, unsigned int*, unsigned int) [343]
+                0.00    0.00   20002/399823      cudaError cudaLaunchKernel<char>(char const*, dim3, dim3, void**, unsigned long, CUstream_st*) [324]
+-----------------------------------------------
+                0.00    0.00   10000/10000       CUDA::project_force(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [38]
+[344]    0.0    0.00    0.00   10000         projectForce(double*, double*, double*, double, unsigned int) [344]
+                0.00    0.00   10000/10000       __device_stub__Z12projectForcePdS_S_dj(double*, double*, double*, double, unsigned int) [346]
+-----------------------------------------------
+                0.00    0.00   10000/10000       CUDA::area_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [18]
+[345]    0.0    0.00    0.00   10000         areaGradient2(double*, unsigned int*, double*, unsigned int) [345]
+                0.00    0.00   10000/10000       __device_stub__Z13areaGradient2PdPjS_j(double*, unsigned int*, double*, unsigned int) [347]
+-----------------------------------------------
+                0.00    0.00   10000/10000       projectForce(double*, double*, double*, double, unsigned int) [344]
+[346]    0.0    0.00    0.00   10000         __device_stub__Z12projectForcePdS_S_dj(double*, double*, double*, double, unsigned int) [346]
+                0.00    0.00   10000/399823      cudaError cudaLaunchKernel<char>(char const*, dim3, dim3, void**, unsigned long, CUstream_st*) [324]
+-----------------------------------------------
+                0.00    0.00   10000/10000       areaGradient2(double*, unsigned int*, double*, unsigned int) [345]
+[347]    0.0    0.00    0.00   10000         __device_stub__Z13areaGradient2PdPjS_j(double*, unsigned int*, double*, unsigned int) [347]
+                0.00    0.00   10000/399823      cudaError cudaLaunchKernel<char>(char const*, dim3, dim3, void**, unsigned long, CUstream_st*) [324]
+-----------------------------------------------
+                0.00    0.00   10000/10000       DeviceMesh::decend_gradient(Gradient*, double) [39]
+[348]    0.0    0.00    0.00   10000         Gradient::get_force() [348]
+-----------------------------------------------
+                0.00    0.00       6/18          DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+                0.00    0.00      12/18          Gradient::Gradient(DeviceMesh*, DeviceAPI*) [400]
+[349]    0.0    0.00    0.00      18         UniqueDevicePtr<double>::UniqueDevicePtr(DeviceAPI*) [349]
+-----------------------------------------------
+                0.00    0.00       3/18          DeviceMesh::~DeviceMesh() [387]
+                0.00    0.00       3/18          DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+                0.00    0.00       6/18          Gradient::~Gradient() [401]
+                0.00    0.00       6/18          Gradient::Gradient(DeviceMesh*, DeviceAPI*) [400]
+[350]    0.0    0.00    0.00      18         UniqueDevicePtr<double>::~UniqueDevicePtr() [350]
+                0.00    0.00       9/13          CUDA::deallocate(void*) [351]
+-----------------------------------------------
+                0.00    0.00       4/13          UniqueDevicePtr<unsigned int>::~UniqueDevicePtr() [355]
+                0.00    0.00       9/13          UniqueDevicePtr<double>::~UniqueDevicePtr() [350]
+[351]    0.0    0.00    0.00      13         CUDA::deallocate(void*) [351]
+-----------------------------------------------
+                0.00    0.00       4/13          UniqueDevicePtr<unsigned int>::allocate(int) [362]
+                0.00    0.00       9/13          UniqueDevicePtr<double>::allocate(int) [353]
+[352]    0.0    0.00    0.00      13         CUDA::allocate(void**, unsigned int) [352]
+-----------------------------------------------
+                0.00    0.00       3/9           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+                0.00    0.00       6/9           Gradient::Gradient(DeviceMesh*, DeviceAPI*) [400]
+[353]    0.0    0.00    0.00       9         UniqueDevicePtr<double>::allocate(int) [353]
+                0.00    0.00       9/13          CUDA::allocate(void**, unsigned int) [352]
+-----------------------------------------------
+                0.00    0.00       8/8           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+[354]    0.0    0.00    0.00       8         UniqueDevicePtr<unsigned int>::UniqueDevicePtr(DeviceAPI*) [354]
+-----------------------------------------------
+                0.00    0.00       4/8           DeviceMesh::~DeviceMesh() [387]
+                0.00    0.00       4/8           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+[355]    0.0    0.00    0.00       8         UniqueDevicePtr<unsigned int>::~UniqueDevicePtr() [355]
+                0.00    0.00       4/13          CUDA::deallocate(void*) [351]
+-----------------------------------------------
+                0.00    0.00       8/8           std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >&) [357]
+[356]    0.0    0.00    0.00       8         std::_Head_base<0ul, unsigned int*, false>::_M_head(std::_Head_base<0ul, unsigned int*, false>&) [356]
+-----------------------------------------------
+                0.00    0.00       8/8           unsigned int*& std::__get_helper<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >&) [359]
+[357]    0.0    0.00    0.00       8         std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >&) [357]
+                0.00    0.00       8/8           std::_Head_base<0ul, unsigned int*, false>::_M_head(std::_Head_base<0ul, unsigned int*, false>&) [356]
+-----------------------------------------------
+                0.00    0.00       4/8           std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::~unique_ptr() [369]
+                0.00    0.00       4/8           std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::__uniq_ptr_impl(unsigned int*) [374]
+[358]    0.0    0.00    0.00       8         std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_ptr() [358]
+                0.00    0.00       8/8           std::tuple_element<0ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type& std::get<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> >&) [360]
+-----------------------------------------------
+                0.00    0.00       8/8           std::tuple_element<0ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type& std::get<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> >&) [360]
+[359]    0.0    0.00    0.00       8         unsigned int*& std::__get_helper<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >&) [359]
+                0.00    0.00       8/8           std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >&) [357]
+-----------------------------------------------
+                0.00    0.00       8/8           std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_ptr() [358]
+[360]    0.0    0.00    0.00       8         std::tuple_element<0ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type& std::get<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> >&) [360]
+                0.00    0.00       8/8           unsigned int*& std::__get_helper<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >&) [359]
+-----------------------------------------------
+                0.00    0.00       5/5           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+[361]    0.0    0.00    0.00       5         CUDA::copy_to_device(void*, void*, unsigned int) [361]
+-----------------------------------------------
+                0.00    0.00       4/4           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+[362]    0.0    0.00    0.00       4         UniqueDevicePtr<unsigned int>::allocate(int) [362]
+                0.00    0.00       4/13          CUDA::allocate(void**, unsigned int) [352]
+-----------------------------------------------
+                0.00    0.00       4/4           std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::~unique_ptr() [369]
+[363]    0.0    0.00    0.00       4         std::enable_if<std::is_convertible<unsigned int (*) [], unsigned int (*) []>::value, void>::type std::default_delete<unsigned int []>::operator()<unsigned int>(unsigned int*) const [363]
+-----------------------------------------------
+                0.00    0.00       4/4           std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_Tuple_impl() [370]
+[364]    0.0    0.00    0.00       4         std::_Head_base<0ul, unsigned int*, false>::_Head_base() [364]
+-----------------------------------------------
+                0.00    0.00       4/4           std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >&) [371]
+[365]    0.0    0.00    0.00       4         std::_Head_base<1ul, std::default_delete<unsigned int []>, true>::_M_head(std::_Head_base<1ul, std::default_delete<unsigned int []>, true>&) [365]
+-----------------------------------------------
+                0.00    0.00       4/4           std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >::_Tuple_impl() [372]
+[366]    0.0    0.00    0.00       4         std::_Head_base<1ul, std::default_delete<unsigned int []>, true>::_Head_base() [366]
+-----------------------------------------------
+                0.00    0.00       4/4           std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::~unique_ptr() [369]
+[367]    0.0    0.00    0.00       4         std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::get_deleter() [367]
+                0.00    0.00       4/4           std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_deleter() [373]
+-----------------------------------------------
+                0.00    0.00       4/4           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+[368]    0.0    0.00    0.00       4         std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::unique_ptr<unsigned int*, std::default_delete<unsigned int []>, void, bool>(unsigned int*) [368]
+                0.00    0.00       4/4           std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::__uniq_ptr_impl(unsigned int*) [374]
+-----------------------------------------------
+                0.00    0.00       4/4           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+[369]    0.0    0.00    0.00       4         std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::~unique_ptr() [369]
+                0.00    0.00       4/8           std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_ptr() [358]
+                0.00    0.00       4/4           std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::get_deleter() [367]
+                0.00    0.00       4/4           std::enable_if<std::is_convertible<unsigned int (*) [], unsigned int (*) []>::value, void>::type std::default_delete<unsigned int []>::operator()<unsigned int>(unsigned int*) const [363]
+-----------------------------------------------
+                0.00    0.00       4/4           std::tuple<unsigned int*, std::default_delete<unsigned int []> >::tuple<unsigned int*, std::default_delete<unsigned int []>, true>() [375]
+[370]    0.0    0.00    0.00       4         std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_Tuple_impl() [370]
+                0.00    0.00       4/4           std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >::_Tuple_impl() [372]
+                0.00    0.00       4/4           std::_Head_base<0ul, unsigned int*, false>::_Head_base() [364]
+-----------------------------------------------
+                0.00    0.00       4/4           std::default_delete<unsigned int []>& std::__get_helper<1ul, std::default_delete<unsigned int []>>(std::_Tuple_impl<1ul, std::default_delete<unsigned int []>>&) [376]
+[371]    0.0    0.00    0.00       4         std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >&) [371]
+                0.00    0.00       4/4           std::_Head_base<1ul, std::default_delete<unsigned int []>, true>::_M_head(std::_Head_base<1ul, std::default_delete<unsigned int []>, true>&) [365]
+-----------------------------------------------
+                0.00    0.00       4/4           std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_Tuple_impl() [370]
+[372]    0.0    0.00    0.00       4         std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >::_Tuple_impl() [372]
+                0.00    0.00       4/4           std::_Head_base<1ul, std::default_delete<unsigned int []>, true>::_Head_base() [366]
+-----------------------------------------------
+                0.00    0.00       4/4           std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::get_deleter() [367]
+[373]    0.0    0.00    0.00       4         std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_deleter() [373]
+                0.00    0.00       4/4           std::tuple_element<1ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type& std::get<1ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> >&) [377]
+-----------------------------------------------
+                0.00    0.00       4/4           std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::unique_ptr<unsigned int*, std::default_delete<unsigned int []>, void, bool>(unsigned int*) [368]
+[374]    0.0    0.00    0.00       4         std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::__uniq_ptr_impl(unsigned int*) [374]
+                0.00    0.00       4/4           std::tuple<unsigned int*, std::default_delete<unsigned int []> >::tuple<unsigned int*, std::default_delete<unsigned int []>, true>() [375]
+                0.00    0.00       4/8           std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_ptr() [358]
+-----------------------------------------------
+                0.00    0.00       4/4           std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::__uniq_ptr_impl(unsigned int*) [374]
+[375]    0.0    0.00    0.00       4         std::tuple<unsigned int*, std::default_delete<unsigned int []> >::tuple<unsigned int*, std::default_delete<unsigned int []>, true>() [375]
+                0.00    0.00       4/4           std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_Tuple_impl() [370]
+-----------------------------------------------
+                0.00    0.00       4/4           std::tuple_element<1ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type& std::get<1ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> >&) [377]
+[376]    0.0    0.00    0.00       4         std::default_delete<unsigned int []>& std::__get_helper<1ul, std::default_delete<unsigned int []>>(std::_Tuple_impl<1ul, std::default_delete<unsigned int []>>&) [376]
+                0.00    0.00       4/4           std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >&) [371]
+-----------------------------------------------
+                0.00    0.00       4/4           std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_deleter() [373]
+[377]    0.0    0.00    0.00       4         std::tuple_element<1ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type& std::get<1ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> >&) [377]
+                0.00    0.00       4/4           std::default_delete<unsigned int []>& std::__get_helper<1ul, std::default_delete<unsigned int []>>(std::_Tuple_impl<1ul, std::default_delete<unsigned int []>>&) [376]
+-----------------------------------------------
+                0.00    0.00       1/3           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+                0.00    0.00       2/3           Gradient::Gradient(DeviceMesh*, DeviceAPI*) [400]
+[378]    0.0    0.00    0.00       3         DeviceAPI::get_blockSize() [378]
+-----------------------------------------------
+                0.00    0.00       2/2           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+[379]    0.0    0.00    0.00       2         Mesh::get_facets() [379]
+-----------------------------------------------
+                0.00    0.00       1/2           ShapeOptimizer::~ShapeOptimizer() [389]
+                0.00    0.00       1/2           ShapeOptimizer::printMesh(char const*) [388]
+[380]    0.0    0.00    0.00       2         Mesh::~Mesh() [380]
+-----------------------------------------------
+                0.00    0.00       1/1           __cudaUnregisterBinaryUtil() [451]
+[381]    0.0    0.00    0.00       1         ____nv_dummy_param_ref(void*) [381]
+-----------------------------------------------
+                0.00    0.00       1/1           __libc_csu_init [1466]
+[382]    0.0    0.00    0.00       1         __sti____cudaRegisterAll() [382]
+                0.00    0.00       1/1           __nv_cudaEntityRegisterCallback(void**) [383]
+-----------------------------------------------
+                0.00    0.00       1/1           __sti____cudaRegisterAll() [382]
+[383]    0.0    0.00    0.00       1         __nv_cudaEntityRegisterCallback(void**) [383]
+                0.00    0.00       1/1           __nv_save_fatbinhandle_for_managed_rt(void**) [384]
+-----------------------------------------------
+                0.00    0.00       1/1           __nv_cudaEntityRegisterCallback(void**) [383]
+[384]    0.0    0.00    0.00       1         __nv_save_fatbinhandle_for_managed_rt(void**) [384]
+-----------------------------------------------
+                0.00    0.00       1/1           ShapeOptimizer::ShapeOptimizer(char const*) [4]
+[385]    0.0    0.00    0.00       1         APIFactory::get_API(int) [385]
+                0.00    0.00       1/1           CUDA::CUDA(int) [390]
+-----------------------------------------------
+                0.00    0.00       1/1           ShapeOptimizer::printMesh(char const*) [388]
+[386]    0.0    0.00    0.00       1         DeviceMesh::copy_to_host() [386]
+                0.00    0.00       2/104959      CUDA::copy_to_host(void*, void*, unsigned int) [329]
+                0.00    0.00       1/1042033     UniqueDevicePtr<double>::get() [322]
+                0.00    0.00       1/104962      UniqueDevicePtr<unsigned int>::get() [328]
+                0.00    0.00       1/1           Mesh::Mesh(unsigned int, unsigned int, double*, unsigned int*) [399]
+-----------------------------------------------
+                0.00    0.00       1/1           ShapeOptimizer::~ShapeOptimizer() [389]
+[387]    0.0    0.00    0.00       1         DeviceMesh::~DeviceMesh() [387]
+                0.00    0.00       4/8           UniqueDevicePtr<unsigned int>::~UniqueDevicePtr() [355]
+                0.00    0.00       3/18          UniqueDevicePtr<double>::~UniqueDevicePtr() [350]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[388]    0.0    0.00    0.00       1         ShapeOptimizer::printMesh(char const*) [388]
+                0.00    0.00       1/1           DeviceMesh::copy_to_host() [386]
+                0.00    0.00       1/1           Mesh::print(char const*) [396]
+                0.00    0.00       1/2           Mesh::~Mesh() [380]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[389]    0.0    0.00    0.00       1         ShapeOptimizer::~ShapeOptimizer() [389]
+                0.00    0.00       1/2           Mesh::~Mesh() [380]
+                0.00    0.00       1/1           DeviceMesh::~DeviceMesh() [387]
+                0.00    0.00       1/1           Gradient::~Gradient() [401]
+-----------------------------------------------
+                0.00    0.00       1/1           APIFactory::get_API(int) [385]
+[390]    0.0    0.00    0.00       1         CUDA::CUDA(int) [390]
+                0.00    0.00       1/1           DeviceAPI::DeviceAPI(unsigned int) [402]
+-----------------------------------------------
+                0.00    0.00       1/1           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+[391]    0.0    0.00    0.00       1         Mesh::get_numVert() [391]
+-----------------------------------------------
+                0.00    0.00       1/1           Mesh::load_mesh_from_file(char const*) [395]
+[392]    0.0    0.00    0.00       1         Mesh::getNumFacets(_IO_FILE*) [392]
+-----------------------------------------------
+                0.00    0.00       1/1           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+[393]    0.0    0.00    0.00       1         Mesh::get_numFacets() [393]
+-----------------------------------------------
+                0.00    0.00       1/1           Mesh::load_mesh_from_file(char const*) [395]
+[394]    0.0    0.00    0.00       1         Mesh::getNumVertices(_IO_FILE*) [394]
+-----------------------------------------------
+                0.00    0.00       1/1           Mesh::Mesh(char const*) [398]
+[395]    0.0    0.00    0.00       1         Mesh::load_mesh_from_file(char const*) [395]
+                0.00    0.00       1/1           Mesh::getNumVertices(_IO_FILE*) [394]
+                0.00    0.00       1/1           Mesh::getNumFacets(_IO_FILE*) [392]
+-----------------------------------------------
+                0.00    0.00       1/1           ShapeOptimizer::printMesh(char const*) [388]
+[396]    0.0    0.00    0.00       1         Mesh::print(char const*) [396]
+-----------------------------------------------
+                0.00    0.00       1/1           DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [5]
+[397]    0.0    0.00    0.00       1         Mesh::get_vert() [397]
+-----------------------------------------------
+                0.00    0.00       1/1           ShapeOptimizer::ShapeOptimizer(char const*) [4]
+[398]    0.0    0.00    0.00       1         Mesh::Mesh(char const*) [398]
+                0.00    0.00       1/1           Mesh::load_mesh_from_file(char const*) [395]
+-----------------------------------------------
+                0.00    0.00       1/1           DeviceMesh::copy_to_host() [386]
+[399]    0.0    0.00    0.00       1         Mesh::Mesh(unsigned int, unsigned int, double*, unsigned int*) [399]
+-----------------------------------------------
+                0.00    0.00       1/1           ShapeOptimizer::ShapeOptimizer(char const*) [4]
+[400]    0.0    0.00    0.00       1         Gradient::Gradient(DeviceMesh*, DeviceAPI*) [400]
+                0.00    0.00      12/18          UniqueDevicePtr<double>::UniqueDevicePtr(DeviceAPI*) [349]
+                0.00    0.00       6/18          UniqueDevicePtr<double>::~UniqueDevicePtr() [350]
+                0.00    0.00       6/9           UniqueDevicePtr<double>::allocate(int) [353]
+                0.00    0.00       2/3           DeviceAPI::get_blockSize() [378]
+                0.00    0.00       1/117429      DeviceMesh::get_numVert() [327]
+                0.00    0.00       1/42477       DeviceMesh::get_numFacets() [334]
+-----------------------------------------------
+                0.00    0.00       1/1           ShapeOptimizer::~ShapeOptimizer() [389]
+[401]    0.0    0.00    0.00       1         Gradient::~Gradient() [401]
+                0.00    0.00       6/18          UniqueDevicePtr<double>::~UniqueDevicePtr() [350]
+-----------------------------------------------
+                0.00    0.00       1/1           CUDA::CUDA(int) [390]
+[402]    0.0    0.00    0.00       1         DeviceAPI::DeviceAPI(unsigned int) [402]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+ [342] areaKernel(double*, double*, unsigned int*, unsigned int) [350] UniqueDevicePtr<double>::~UniqueDevicePtr() [31] Gradient::project_to_force()
+ [344] projectForce(double*, double*, double*, double, unsigned int) [328] UniqueDevicePtr<unsigned int>::get() [348] Gradient::get_force()
+ [332] volumeKernel(double*, double*, unsigned int*, unsigned int) [362] UniqueDevicePtr<unsigned int>::allocate(int) [17] Gradient::reproject(double)
+ [345] areaGradient2(double*, unsigned int*, double*, unsigned int) [354] UniqueDevicePtr<unsigned int>::UniqueDevicePtr(DeviceAPI*) [400] Gradient::Gradient(DeviceMesh*, DeviceAPI*)
+ [335] elementMultiply(double*, double*, double*, unsigned int) [355] UniqueDevicePtr<unsigned int>::~UniqueDevicePtr() [401] Gradient::~Gradient()
+ [338] volumeGradient2(double*, unsigned int*, double*, unsigned int) [351] CUDA::deallocate(void*) [378] DeviceAPI::get_blockSize()
+ [324] cudaError cudaLaunchKernel<char>(char const*, dim3, dim3, void**, unsigned long, CUstream_st*) [15] CUDA::dotProduct(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, unsigned int) [402] DeviceAPI::DeviceAPI(unsigned int)
+ [339] addWithMultKernel(double*, double*, double, unsigned int) [329] CUDA::copy_to_host(void*, void*, unsigned int) [9] std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::get() const
+ [325] __device_stub__Z7addTreePdS_(double*, double*) [37] CUDA::add_with_mult(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [14] std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::operator[](unsigned long) const
+ [343] __device_stub__Z10areaKernelPdS_Pjj(double*, double*, unsigned int*, unsigned int) [38] CUDA::project_force(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, double, unsigned int) [363] std::enable_if<std::is_convertible<unsigned int (*) [], unsigned int (*) []>::value, void>::type std::default_delete<unsigned int []>::operator()<unsigned int>(unsigned int*) const
+ [333] __device_stub__Z12volumeKernelPdS_Pjj(double*, double*, unsigned int*, unsigned int) [18] CUDA::area_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [10] std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_ptr() const
+ [346] __device_stub__Z12projectForcePdS_S_dj(double*, double*, double*, double, unsigned int) [361] CUDA::copy_to_device(void*, void*, unsigned int) [320] std::_Head_base<0ul, unsigned int*, false>::_M_head(std::_Head_base<0ul, unsigned int*, false> const&)
+ [347] __device_stub__Z13areaGradient2PdPjS_j(double*, unsigned int*, double*, unsigned int) [6] CUDA::sum_of_elements(UniqueDevicePtr<double>*, unsigned int, unsigned int) [356] std::_Head_base<0ul, unsigned int*, false>::_M_head(std::_Head_base<0ul, unsigned int*, false>&)
+ [336] __device_stub__Z15elementMultiplyPdS_S_j(double*, double*, double*, unsigned int) [34] CUDA::volume_gradient2(UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, UniqueDevicePtr<double>*, unsigned int, unsigned int) [364] std::_Head_base<0ul, unsigned int*, false>::_Head_base()
+ [340] __device_stub__Z15volumeGradient2PdPjS_j(double*, unsigned int*, double*, unsigned int) [13] CUDA::cuda_sync_and_check(char const*) [365] std::_Head_base<1ul, std::default_delete<unsigned int []>, true>::_M_head(std::_Head_base<1ul, std::default_delete<unsigned int []>, true>&)
+ [341] __device_stub__Z17addWithMultKernelPdS_dj(double*, double*, double, unsigned int) [36] CUDA::area(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [366] std::_Head_base<1ul, std::default_delete<unsigned int []>, true>::_Head_base()
+ [326] addTree(double*, double*) [33] CUDA::volume(UniqueDevicePtr<double>*, UniqueDevicePtr<double>*, UniqueDevicePtr<unsigned int>*, unsigned int) [367] std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::get_deleter()
+ [381] ____nv_dummy_param_ref(void*) [352] CUDA::allocate(void**, unsigned int) [368] std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::unique_ptr<unsigned int*, std::default_delete<unsigned int []>, void, bool>(unsigned int*)
+ [382] __sti____cudaRegisterAll() [390] CUDA::CUDA(int)  [369] std::unique_ptr<unsigned int [], std::default_delete<unsigned int []> >::~unique_ptr()
+ [383] __nv_cudaEntityRegisterCallback(void**) [379] Mesh::get_facets() [321] std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> > const&)
+ [384] __nv_save_fatbinhandle_for_managed_rt(void**) [391] Mesh::get_numVert() [357] std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >&)
+ [385] APIFactory::get_API(int) [392] Mesh::getNumFacets(_IO_FILE*) [370] std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >::_Tuple_impl()
+ [337] DeviceMesh::get_facets() [393] Mesh::get_numFacets() [371] std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >::_M_head(std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >&)
+ [327] DeviceMesh::get_numVert() [394] Mesh::getNumVertices(_IO_FILE*) [372] std::_Tuple_impl<1ul, std::default_delete<unsigned int []> >::_Tuple_impl()
+ [386] DeviceMesh::copy_to_host() [395] Mesh::load_mesh_from_file(char const*) [373] std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_deleter()
+ [334] DeviceMesh::get_numFacets() [396] Mesh::print(char const*) [358] std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::_M_ptr()
+  [39] DeviceMesh::decend_gradient(Gradient*, double) [397] Mesh::get_vert() [374] std::__uniq_ptr_impl<unsigned int, std::default_delete<unsigned int []> >::__uniq_ptr_impl(unsigned int*)
+  [32] DeviceMesh::area()    [398] Mesh::Mesh(char const*) [375] std::tuple<unsigned int*, std::default_delete<unsigned int []> >::tuple<unsigned int*, std::default_delete<unsigned int []>, true>()
+  [16] DeviceMesh::volume()  [399] Mesh::Mesh(unsigned int, unsigned int, double*, unsigned int*) [11] unsigned int* const& std::__get_helper<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> > const&)
+ [330] DeviceMesh::get_vert() [380] Mesh::~Mesh()        [359] unsigned int*& std::__get_helper<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::_Tuple_impl<0ul, unsigned int*, std::default_delete<unsigned int []> >&)
+   [5] DeviceMesh::DeviceMesh(Mesh*, DeviceAPI*) [323] dim3::dim3(unsigned int, unsigned int, unsigned int) [376] std::default_delete<unsigned int []>& std::__get_helper<1ul, std::default_delete<unsigned int []>>(std::_Tuple_impl<1ul, std::default_delete<unsigned int []>>&)
+ [387] DeviceMesh::~DeviceMesh() [24] cudart::cudaSurface::setStorage(bool) [331] std::abs(double)
+   [2] ShapeOptimizer::gradientDesent(int) [25] cudart::contextState::getEntryFunction(cudart::cudaEntryFunction**, void const*, cudaError) [12] std::tuple_element<0ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type const& std::get<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> > const&)
+   [3] ShapeOptimizer::gradientDesentStep() [26] cudart::cudaApiMemcpy(void*, void const*, unsigned long, cudaMemcpyKind) [360] std::tuple_element<0ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type& std::get<0ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> >&)
+   [7] ShapeOptimizer::reproject_constraints() [27] cudart::getGlobalState() [377] std::tuple_element<1ul, std::tuple<unsigned int*, std::default_delete<unsigned int []> > >::type& std::get<1ul, unsigned int*, std::default_delete<unsigned int []> >(std::tuple<unsigned int*, std::default_delete<unsigned int []> >&)
+ [388] ShapeOptimizer::printMesh(char const*) [28] cudart::cudaApiLaunchKernel(void const*, dim3, dim3, void**, unsigned long, CUstream_st*) [23] std::ceil(float)
+   [4] ShapeOptimizer::ShapeOptimizer(char const*) [29] cudart::cudaApiLaunchKernel_ptsz(void const*, dim3, dim3, void**, unsigned long, CUstream_st*) [20] cudaDeviceSynchronize
+ [389] ShapeOptimizer::~ShapeOptimizer() [30] cudart::cuosInterlockedCompareExchange(unsigned int volatile*, unsigned int, unsigned int) [21] cudaGetLastError
+ [322] UniqueDevicePtr<double>::get() [8] Gradient::calc_force() [22] cudaMemset
+ [353] UniqueDevicePtr<double>::allocate(int) [19] Gradient::calc_gradA()
+ [349] UniqueDevicePtr<double>::UniqueDevicePtr(DeviceAPI*) [35] Gradient::calc_gradV()

@@ -30,6 +30,11 @@ int main(int nargs, char** argv){
         printf("failed with error %s\n",e);
         return -1;
     }
+	catch(...){
+		printf("Failed with bad error\n");
+		return -1;
+
+	}
 
 
 }

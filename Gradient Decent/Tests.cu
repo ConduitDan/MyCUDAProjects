@@ -11,16 +11,7 @@
 //#####################
 // Cube-> sphere test
 //#####################
-BOOST_AUTO_TEST_CASE(cube_to_sphere){
-    ShapeOptimizer myOptimizer("testCube.mesh");
-    myOptimizer.gradientDesent(12);
 
-    Mesh acutal = myOptimizer.get_optimized_mesh();
-    Mesh expected = Mesh("testCubeRelaxed.mesh");
-
-    BOOST_CHECK(acutal==expected);
-
-}
 
 //#####################
 // mesh tests
@@ -38,14 +29,7 @@ BOOST_AUTO_TEST_CASE(cube_to_sphere){
 
 // calc area
 
-BOOST_AUTO_TEST_CASE(area){
-    //area test
-    Mesh square = Mesh("square.mesh");
-    DeviceMesh dSquare = DeviceMesh(&square,new CUDA(128));
-    double area = dSquare.area();
-    std::cout<<"Testing area of a square\n";
-    BOOST_CHECK (area == 1.0);
-}
+
 // calc volume
 //
 
@@ -59,68 +43,11 @@ BOOST_AUTO_TEST_CASE(area){
 // add with MultKernal
 // area
 // areaGrad
-BOOST_AUTO_TEST_CASE(areaGrad){
 
-
-    cudaError cudaStatus;
-
-    // expected Vals
-
-    double firstEle[14] = { -1, 1, -1, 1, -1, 1, -1, 1, 0, 0, 0, 0, 0, 0};
-    double secondEle[14] = { -1, -1, 1, 1, -1, -1, 1, 1, 0, 0, 0, 0, 0, 0};
-    double thirdEle[14] = { -1, -1, -1, -1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0};
-    
-	DeviceAPI* GPU_API = new CUDA(128);
-    Mesh myMesh = Mesh("cube.mesh");
-    DeviceMesh myDMesh = DeviceMesh(&myMesh,GPU_API);
-    Gradient myGrad = Gradient(&myDMesh,GPU_API);
-    myGrad.calc_force();
-
-    double * gradA = new double[14*3];
-    cudaStatus = cudaMemcpy(gradA, myGrad.get_gradA(), 14 * 3 *  sizeof(double), cudaMemcpyDeviceToHost);
-    BOOST_REQUIRE (cudaStatus == cudaSuccess);
-
-    double tol = 1e-6;
-    for (int i = 0; i<14; i++){
-        BOOST_CHECK(abs(firstEle[i]-gradA[i*3])<tol);
-        BOOST_CHECK(abs(secondEle[i]-gradA[i*3+1])<tol);
-        BOOST_CHECK(abs(thirdEle[i]-gradA[i*3+2])<tol);
-
-    }
-}
 
 // volume
 // volumeGrad
 
-BOOST_AUTO_TEST_CASE(volumeGrad){
-
-    cudaError cudaStatus;
-
-    // expected Vals
-    double firstEle[14] = {-0.166667, 0.166667, -0.166667, 0.166667, -0.166667, 0.166667, -0.166667, 0.166667, 0, 0, 0, 0, -0.333333, 0.333333};
-    double secondEle[14] = { -0.166667, -0.166667, 0.166667, 0.166667, -0.166667, -0.166667, 0.166667, 0.166667, 0, 0, -0.333333, 0.333333, 0, 0 };
-    double thirdEle[14] = { -0.166667, -0.166667, -0.166667, -0.166667, 0.166667, 0.166667, 0.166667, 0.166667, -0.333333, 0.333333, 0, 0, 0, 0 };
-    
-	DeviceAPI* GPU_API = new CUDA(128);
-    Mesh myMesh = Mesh("cube.mesh");
-    DeviceMesh myDMesh = DeviceMesh(&myMesh,GPU_API);
-    Gradient myGrad = Gradient(&myDMesh,GPU_API);
-    myGrad.calc_force();
-
-    double * gradV = new double[14*3];
-    cudaStatus = cudaMemcpy(gradV, myGrad.get_gradV(), 14 * 3 *  sizeof(double), cudaMemcpyDeviceToHost);
-    BOOST_REQUIRE (cudaStatus == cudaSuccess);
-
-    double tol = 1e-4;
-    for (int i = 0; i<14; i++){
-        BOOST_CHECK(abs(firstEle[i]-gradV[i*3])<tol);
-        BOOST_CHECK(abs(secondEle[i]-gradV[i*3+1])<tol);
-        BOOST_CHECK(abs(thirdEle[i]-gradV[i*3+2])<tol);
-
-    }
-
-    delete[] gradV;
-}
 
 
 

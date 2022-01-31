@@ -2,6 +2,8 @@
 #ifndef Gradient_hpp
 #define Gradient_hpp
 
+
+
 #include "Mesh.hpp"
 #include "DeviceAPI.hpp"
 #include <memory>
@@ -14,17 +16,16 @@ protected:
 	DeviceAPI *_GPU = nullptr; 
 
 	UniqueDevicePtr<double> _gradAFacet = UniqueDevicePtr<double>(_GPU);
-	UniqueDevicePtr<double> _gradAVert = UniqueDevicePtr<double>(_GPU);
-
 	UniqueDevicePtr<double> _gradVFacet = UniqueDevicePtr<double>(_GPU);
+	
+	UniqueDevicePtr<double> _gradAVert = UniqueDevicePtr<double>(_GPU);
 	UniqueDevicePtr<double> _gradVVert = UniqueDevicePtr<double>(_GPU);
-
+	
 	UniqueDevicePtr<double> _force = UniqueDevicePtr<double>(_GPU);
 	UniqueDevicePtr<double> _scratch = UniqueDevicePtr<double>(_GPU);
 
+	int _noF2V = 3;
 
-	void calc_gradA();
-	void calc_gradV();
 
 private:
 
@@ -35,6 +36,9 @@ private:
 
 
 public:
+	void calc_gradA();
+	void calc_gradV();
+
 	Gradient(DeviceMesh *inMesh, DeviceAPI* GPUAPIin);
 	void calc_force();
 	
