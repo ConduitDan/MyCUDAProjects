@@ -16,5 +16,3 @@ DeviceAPI* APIFactory::get_API(int blockSize){
 
 #undef API
 
-
-// set the pointer to null by default
