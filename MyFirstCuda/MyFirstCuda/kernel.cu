@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 cudaError_t addWithCuda(int *c, const int *a, const int *b, unsigned int size);
-
+//https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/
 __global__ void addKernel(int *c, const int *a, const int *b)
 {
     int i = threadIdx.x;
