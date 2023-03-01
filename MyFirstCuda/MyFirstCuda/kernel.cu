@@ -88,7 +88,7 @@ cudaError_t addWithCuda(int *c, const int *a, const int *b, unsigned int size)
     }
 
     // Launch a kernel on the GPU with one thread for each element.
-    addKernel<<<ceil(size / 32.0), 32 >> >(dev_c, dev_a, dev_b);
+    addKernel<<<ceil(size / 32.0), 32 >>>(dev_c, dev_a, dev_b);
 
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
